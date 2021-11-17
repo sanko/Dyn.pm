@@ -73,7 +73,7 @@ SKIP: {
                 module_name  => 't::hello',
                 dl_func_list => [
                     qw[add
-                        b2Z ii2i s2Z j2Z l2Z f2Z d2Z
+                        b2Z c2Z ii2i s2Z j2Z l2Z f2Z d2Z
                         Z2Z v2v v2p p2Z p2i]
                 ]
             );
