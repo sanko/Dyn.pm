@@ -24,46 +24,111 @@ Dyn::Callback - dyncall Backed FFI
 
 =head1 SYNOPSIS
 
-    use Dyn; # Exports nothing by default
-
-    my $lib = Dyn::Load::LoadLibrary( 'path/to/lib.so' );
-    my $ptr = Dyn::Load::FindSymbol( $lib, 'add' );
-    my $cvm = Dyn::Call::NewCallVM(1024);
-    Dyn::Call::Mode( $cvm, 0 );
-    Dyn::Call::Reset( $cvm );
-    Dyn::Call::ArgInt( $cvm, 5 );
-    Dyn::Call::ArgInt( $cvm, 6 );
-    Dyn::Call::CallInt( $cvm, $ptr ); #  '5 + 6 == 11';
+    use Dyn::Callback qw[:all];    # Exports nothing by default
+    use Dyn::Load;
+    use Dyn::Call qw[DC_CALL_C_DEFAULT];
+    my $lib = Dyn::Load::dlLoadLibrary('path/to/lib.so');
+    my $ptr = Dyn::Load::dlFindSymbol( $lib, 'timer' );
+    my $cvm = dcNewCallVM(1024);
+    Dyn::Call::dcMode( $cvm, DC_CALL_C_DEFAULT );
+    Dyn::Call::dcReset($cvm);
+    my $cb = dcbNewCallback(       # Accepts an int and returns an int
+        'i)i',
+        sub {
+            my ($in) = @_;
+            ...;                   # do something
+            return 1;
+        },
+        5
+    );
+    Dyn::Call::dcArgPointer( $cvm, $cb );    # pass callbacks as pointers
+    Dyn::Call::dcCallVoid( $cvm, $ptr );     # your timer() function returns void
 
 =head1 DESCRIPTION
 
-Dyn::Callback has an interface to create callback objects that can be passed to
+Dyn::Callback is an interface to create callback objects that can be passed to
 functions as callback arguments. In other words, a pointer to the callback
-object can be "called", directly. The callback handler then allows iterating
-dynamically over the arguments once called back.
+object can be "called" directly from the foreign library.
 
 =head1 Functions
 
 These may be imported by name or called directly.
 
-=head2 C<new( ... )>
-
-
-
-
 =head2 C<dcbNewCallback( ... )>
 
+Creates a new callback object, where C<signature> is a signature string
+describing the function.
 
+    my $pcb = dcbNewCallback(
+        'i)i',
+        sub {
+            my ($in) = @_;
+            ...;
+            return 1;
+        },
+        5
+    );
+
+Expected parameters include:
+
+=over
+
+=item C<signature> - string describing any parameters and return value
+
+=item C<code> - a code reference
+
+=item C<userdata> - arbitrary data
+
+=back
 
 =head2 C<dcbInitCallback( ... )>
 
+Initialize (or reinitialize) the callback object.
+
+    dcbInitCallback( $pcb, 'i)Z', sub { ...; }, undef );
+
+Expected parameters include:
+
+=over
+
+=item C<pcb> - Dyn::Callback object to reinitialize
+
+=item C<signature> - string describing any parameters and return value
+
+=item C<code> - a code reference
+
+=item C<userdata> - arbitrary data
+
+=back
+
 =head2 C<dcbFreeCallback( ... )>
+
+Destroys and frees the callback.
+
+    dcbFreeCallback( $pcb );
+
+Expected parameters include:
+
+=over
+
+=item C<pcb> - Dyn::Callback object to reinitialize
+
+=back
 
 =head2 C<dcbGetUserData( ... )>
 
+Returns the userdata passed to the callback object on creation or
+initialization.
 
+    my $data = dcbFreeCallback( $pcb );
 
+Expected parameters include:
 
+=over
+
+=item C<pcb> - Dyn::Callback object to reinitialize
+
+=back
 
 =head1 LICENSE
 
@@ -79,6 +144,7 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =begin stopwords
 
+reinitialize userdata
 
 =end stopwords
 

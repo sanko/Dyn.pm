@@ -246,7 +246,27 @@ OUTPUT:
     RETVAL
 
 void
-dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * funcptr, void * userdata);
+dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * funcptr, SV * userdata);
+PREINIT:
+    dTHX;
+    _callback * container;
+#ifdef USE_ITHREADS
+    PERL_SET_CONTEXT(my_perl);
+#endif
+CODE:
+    container = (_callback*) dcbGetUserData(pcb);
+    container->signature = signature;
+    container->cb = SvREFCNT_inc(funcptr);
+    container->userdata = SvREFCNT_inc(userdata);
+    int i;
+    for (i = 0; container->signature[i+1] != '\0'; ++i ) {
+        //warn("here at %s line %d.", __FILE__, __LINE__);
+        if (container->signature[i] == ')') {
+            container->ret_type = container->signature[i+1];
+            break;
+        }
+    }
+    dcbInitCallback(pcb, signature, callback_handler, (void *) container);
 
 void
 dcbFreeCallback(DCCallback * pcb);
@@ -255,8 +275,13 @@ CODE:
     dcFree(container->cvm);
     dcbFreeCallback( pcb );
 
-void
+SV *
 dcbGetUserData(DCCallback * pcb);
+CODE:
+    _callback * container = ((_callback*) dcbGetUserData(pcb));
+    RETVAL = container->userdata;
+OUTPUT:
+    RETVAL
 
 =pod
 
