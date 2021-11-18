@@ -57,7 +57,20 @@ void
 dcArgDouble(DCCallVM * vm, DCdouble arg);
 
 void
-dcArgPointer(DCCallVM * vm, DCpointer arg);
+dcArgPointer(DCCallVM * vm, arg);
+CODE:
+    if (sv_derived_from(ST(1), "Dyn::Callback") ) {
+        IV tmp = SvIV((SV*)SvRV(ST(1)));
+        DCCallback * arg = INT2PTR(DCCallback *, tmp);
+        dcArgPointer(vm, arg);
+    }
+    else if (sv_derived_from(ST(1), "Dyn::pointer")){
+        IV tmp = SvIV((SV*)SvRV(ST(1)));
+        DCpointer arg = INT2PTR(DCpointer, tmp);
+        dcArgPointer(vm, arg);
+    }
+    else
+        croak("arg is not of type Dyn::pointer");
 
 void
 dcArgStruct(DCCallVM * vm, DCstruct * s, DCpointer value);
@@ -133,18 +146,6 @@ void
 dcVCallF(DCCallVM * vm, DCValue * result, DCpointer funcptr, const DCsigchar * signature, va_list args);
 
 =cut
-
-DCCallback *
-dcbNewCallback(const char * signature, DCCallbackHandler * funcptr, void * userdata);
-
-void
-dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * funcptr, void * userdata);
-
-void
-dcbFreeCallback(DCCallback * pcb);
-
-void
-dcbGetUserData(DCCallback * pcb);
 
 DCint
 dcGetError(DCCallVM* vm);

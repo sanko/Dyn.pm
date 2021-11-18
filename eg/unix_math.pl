@@ -18,10 +18,9 @@ find(
     },
     '/usr/lib'
 );
-my ($path) = @files;    # pick one
-warn $path;
-my $lib  = dlLoadLibrary($path);
-my $init = dlSymsInit($path);
+my ($path) = @files;                 # pick one
+my $lib    = dlLoadLibrary($path);
+my $init   = dlSymsInit($path);
 #
 CORE::say "Symbols in libm ($path): " . dlSymsCount($init);
 CORE::say 'All symbol names in libm:';

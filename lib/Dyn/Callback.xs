@@ -7,58 +7,11 @@
 #include <dyncall_signature.h>
 #include <dyncall_callback.h>
 
-
-/*
-
-#define DC_SIGCHAR_VOID         'v'
-#define DC_SIGCHAR_BOOL         'B'
-#define DC_SIGCHAR_CHAR         'c'
-#define DC_SIGCHAR_UCHAR        'C'
-#define DC_SIGCHAR_SHORT        's'
-#define DC_SIGCHAR_USHORT       'S'
-#define DC_SIGCHAR_INT          'i'
-#define DC_SIGCHAR_UINT         'I'
-#define DC_SIGCHAR_LONG         'j'
-#define DC_SIGCHAR_ULONG        'J'
-#define DC_SIGCHAR_LONGLONG     'l'
-#define DC_SIGCHAR_ULONGLONG    'L'
-#define DC_SIGCHAR_FLOAT        'f'
-#define DC_SIGCHAR_DOUBLE       'd'
-#define DC_SIGCHAR_POINTER      'p'
-#define DC_SIGCHAR_STRING       'Z' /* in theory same as 'p', but convenient to disambiguate * /
-#define DC_SIGCHAR_STRUCT       'T'
-#define DC_SIGCHAR_ENDARG       ')' /* also works for end struct * /
-
-/* calling convention / mode signatures * /
-
-#define DC_SIGCHAR_CC_PREFIX           '_'
-#define DC_SIGCHAR_CC_DEFAULT          ':'
-#define DC_SIGCHAR_CC_ELLIPSIS         'e'
-#define DC_SIGCHAR_CC_ELLIPSIS_VARARGS '.'
-#define DC_SIGCHAR_CC_CDECL            'c'
-#define DC_SIGCHAR_CC_STDCALL          's'
-#define DC_SIGCHAR_CC_FASTCALL_MS      'F'
-#define DC_SIGCHAR_CC_FASTCALL_GNU     'f'
-#define DC_SIGCHAR_CC_THISCALL_MS      '+'
-#define DC_SIGCHAR_CC_THISCALL_GNU     '#' /* GNU thiscalls are cdecl, but keep specific sig char for clarity * /
-#define DC_SIGCHAR_CC_ARM_ARM          'A'
-#define DC_SIGCHAR_CC_ARM_THUMB        'a'
-#define DC_SIGCHAR_CC_SYSCALL          '$'
-
-*/
-
 #include "lib/types.h"
 
 #ifdef USE_ITHREADS
 static PerlInterpreter *my_perl; /***    The Perl interpreter    ***/
 #endif
-
-typedef struct _callback {
-    SV * cb;
-    const char * signature;
-    char ret_type;
-    SV * userdata;
-} _callback;
 
 static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, void * userdata) {
     dTHX;
@@ -74,7 +27,6 @@ static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, v
     //int * ud = (int*) container->userdata;
 
     SV * cb_sv = container->cb;
-    AV * av_args = (AV *) dcbArgPointer(args);
 
     ENTER;
     SAVETMPS;
@@ -83,59 +35,68 @@ static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, v
     {   const char * signature = container->signature;
         //warn("signature == %s at %s line %d.", container->signature, __FILE__, __LINE__);
         int done, okay;
-        SV * arg;
         int i;
+        //warn("signature: %s at %s line %d.", signature, __FILE__, __LINE__);
         for (i = 0; signature[i+1] != '\0'; ++i ) {
             done = okay = 0;
             //warn("here at %s line %d.", __FILE__, __LINE__);
-            //warn("signature[%d] == %s at %s line %d.", i, container->signature[i], __FILE__, __LINE__);
-            arg = av_shift(av_args);
-            switch(signature[i]) {
+            //warn("signature[%d] == %c at %s line %d.", i, signature[i], __FILE__, __LINE__);
+            switch (signature[i]) {
                 case DC_SIGCHAR_VOID:
-                    //okay = SvIOK(arg);
+                    //warn("Unhandled callback argument '%c' at %s line %d.", signature[i], __FILE__, __LINE__);
                     break;
                 case DC_SIGCHAR_BOOL:
+                    XPUSHs(newSViv(dcbArgBool(args))); break;
                 case DC_SIGCHAR_CHAR:
-                case DC_SIGCHAR_SHORT:
-                case DC_SIGCHAR_INT:
-                case DC_SIGCHAR_LONG:
-                case DC_SIGCHAR_LONGLONG:
-                    okay = SvIOK(arg);
-                    break;
-                case DC_SIGCHAR_FLOAT:
-                case DC_SIGCHAR_DOUBLE:
-                    okay = SvNOK(arg);
-                    break;
                 case DC_SIGCHAR_UCHAR:
+                    XPUSHs(newSViv(dcbArgChar(args))); break;
+                case DC_SIGCHAR_SHORT:
                 case DC_SIGCHAR_USHORT:
+                    XPUSHs(newSViv(dcbArgShort(args))); break;
+                case DC_SIGCHAR_INT:
+                    XPUSHs(newSViv(dcbArgInt(args))); break;
                 case DC_SIGCHAR_UINT:
+                    XPUSHs(newSVuv(dcbArgInt(args))); break;
+                case DC_SIGCHAR_LONG:
+                    XPUSHs(newSVnv(dcbArgLong(args))); break;
                 case DC_SIGCHAR_ULONG:
+                    XPUSHs(newSVuv(dcbArgLong(args))); break;
+                case DC_SIGCHAR_LONGLONG:
+                    XPUSHs(newSVnv(dcbArgLongLong(args))); break;
                 case DC_SIGCHAR_ULONGLONG:
-                    okay = SvIOK_UV(arg);
-                    break;
+                    XPUSHs(newSVuv(dcbArgLongLong(args))); break;
+                case DC_SIGCHAR_FLOAT:
+                    XPUSHs(newSVnv(dcbArgFloat(args))); break;
+                case DC_SIGCHAR_DOUBLE:
+                    XPUSHs(newSVnv(dcbArgDouble(args))); break;
+                case DC_SIGCHAR_POINTER:
                 case DC_SIGCHAR_STRING:
-                    okay = SvPOK(arg);
+                    XPUSHs(newSVpv(dcbArgPointer(args), 0) ); break;
+                case DC_SIGCHAR_STRUCT:
+                    warn("Unhandled callback argument '%c' at %s line %d.", signature[i], __FILE__, __LINE__);
                     break;
                 case DC_SIGCHAR_ENDARG:
-                    ret_type = signature[i+1];
+                    ret_type = signature[i + 1];
                     done++;
                     break;
-                case DC_SIGCHAR_POINTER:
-                case DC_SIGCHAR_STRUCT:
                 default:
-                    warn("Unknown arg type");
+                    warn("Unhandled callback argument '%c' at %s line %d.", signature[i], __FILE__, __LINE__);
                     break;
             };
-            if (done)
-                break;
-            else if (okay)
-                XPUSHs(arg);
-            //warn("here at %s line %d.", __FILE__, __LINE__);
+            if (done) break;
+  /*
+                  int       arg1 = dcbArgInt     (args);
+  float     arg2 = dcbArgFloat   (args);
+  short     arg3 = dcbArgShort   (args);
+  double    arg4 = dcbArgDouble  (args);
+  long long arg5 = dcbArgLongLong(args);
+    */
         }
         //warn("here at %s line %d.", __FILE__, __LINE__);
     }
     //warn("here at %s line %d.", __FILE__, __LINE__);
 
+    // XXX: Does anyone expect this?
     XPUSHs(container->userdata);
 
     PUTBACK;
@@ -145,9 +106,12 @@ static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, v
     //warn("here at %s line %d.", __FILE__, __LINE__);
     //warn("signature was %s", signature);
 
-    count = call_sv(cb_sv, ret_type == 'v' ? G_VOID : G_SCALAR );
+    count = call_sv(cb_sv, ret_type == DC_SIGCHAR_VOID ? G_VOID : G_SCALAR );
 
     SPAGAIN;
+
+        //warn("return type: %c at %s line %d.", ret_type, __FILE__, __LINE__);
+
 
     switch(ret_type)     {
         case DC_SIGCHAR_VOID:
@@ -158,55 +122,81 @@ static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, v
             result->B = (bool) POPi;
             break;
         case DC_SIGCHAR_CHAR:
+            if (count != 1)
+                croak("Unexpected return values");
+            result->c = (char) POPi;
+            break;
         case DC_SIGCHAR_UCHAR:
-            warn("Unhandled type at %s line %d.", __FILE__, __LINE__);
+            if (count != 1)
+                croak("Unexpected return values");
+            result->C = (u_char) POPi;
             break;
         case DC_SIGCHAR_SHORT:
             if (count != 1)
                 croak("Unexpected return values");
             result->s = (short) POPi;
-            warn ("short == %d", result->s);
             break;
         case DC_SIGCHAR_USHORT:
             if (count != 1)
                 croak("Unexpected return values");
             result->S = (u_short) POPi;
             break;
-        case DC_SIGCHAR_INT: // int
+        case DC_SIGCHAR_INT:
             if (count != 1)
                 croak("Unexpected return values");
-            result->i = POPi;
+            result->i = (int) POPi;
             break;
-        case DC_SIGCHAR_LONG: // long
+        case DC_SIGCHAR_UINT:
             if (count != 1)
                 croak("Unexpected return values");
-            result->l = POPl;
+            result->I = (u_int) POPi;
+            break;
+        case DC_SIGCHAR_LONG:
+            if (count != 1)
+                croak("Unexpected return values");
+            result->j = POPl;
+            break;
+        case DC_SIGCHAR_ULONG:
+            if (count != 1)
+                croak("Unexpected return values");
+            result->J = POPul;
+            break;
+        case DC_SIGCHAR_LONGLONG:
+            if (count != 1)
+                croak("Unexpected return values");
+            result->l = (long long) POPl;
+            break;
+        case DC_SIGCHAR_ULONGLONG:
+            if (count != 1)
+                croak("Unexpected return values");
+            result->L = POPul;
+            break;
+        case DC_SIGCHAR_FLOAT: // double
+            if (count != 1)
+                croak("Unexpected return values");
+            result->f = (float) POPn;
             break;
         case DC_SIGCHAR_DOUBLE: // double
             if (count != 1)
                 croak("Unexpected return values");
-            result->l = POPn;
+            result->d = (double) POPn;
             break;
-        case 'p': // string
+        case DC_SIGCHAR_POINTER: // string
             if (count != 1)
                 croak("Unexpected return values");
-            result->l = POPl;
+            result->p = (DCpointer *) POPl;
             break;
-        case 'u': // uint
-            if (count != 1)
-                croak("Unexpected return values");
-            result->l = POPu;
-            break;
-        case DC_SIGCHAR_STRING:
+        case DC_SIGCHAR_STRING: // string
             if (count != 1)
                 croak("Unexpected return values");
             result->Z = POPpx;
             break;
-        //case 'a':
-        //    count = call_sv(cb_sv, G_ARRAY);
-            //if (count != 2)
-            //    croak("Big trouble\n");
-
+        case DC_SIGCHAR_STRUCT: // string
+            if (count != 1)
+                croak("Unexpected return values");
+            warn("Unhandled return type at %s line %d.", __FILE__, __LINE__);
+            //result->l = POPl;            break;
+            break;
     }
 
     PUTBACK;
@@ -236,7 +226,9 @@ CODE:
     container = malloc(sizeof(_callback));
     if (!container) // OOM
         XSRETURN_UNDEF;
-    //container->interval = interval;
+    container->cvm = dcNewCallVM(1024);
+    dcMode(container->cvm, 0); // TODO: Use correct value according to signature
+    dcReset(container->cvm);
     container->signature = signature;
     container->cb = SvREFCNT_inc(funcptr);
     container->userdata = SvREFCNT_inc(userdata);
@@ -248,6 +240,7 @@ CODE:
             break;
         }
     }
+    //warn("signature: %s at %s line %d.", signature, __FILE__, __LINE__);
     RETVAL = dcbNewCallback(signature, callback_handler, (void *) container);
 OUTPUT:
     RETVAL
@@ -257,6 +250,10 @@ dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * fu
 
 void
 dcbFreeCallback(DCCallback * pcb);
+CODE:
+    _callback * container = ((_callback*) dcbGetUserData(pcb));
+    dcFree(container->cvm);
+    dcbFreeCallback( pcb );
 
 void
 dcbGetUserData(DCCallback * pcb);
@@ -274,9 +271,142 @@ PREINIT:
 #ifdef USE_ITHREADS
     PERL_SET_CONTEXT(my_perl);
 #endif
-    AV * args = newAV();
+    //AV * args = newAV();
+CODE:
+    RETVAL = newSV(0);
+    _callback * container = ((_callback*) dcbGetUserData(self));
+    const char * signature = container->signature;
+    int done = 0;
+    int i;
+    dcReset(container->cvm); // Get it ready to call again
+    int tally = 0;
+    //warn("here at %s line %d.", __FILE__, __LINE__);
+    for (i = 1; signature[i] != '\0'; ++i) {
+        //warn ("i: %d vs items: %d", i, items);
+        //if (i > items - 1) // TODO: Don't do this is signature is var_list, etc.
+        //    croak("Incorrect number of arguments for callback. Expected %d but were handed %d.", i, items - 1);
+        tally++;
+        switch(signature[i - 1]) {
+            case DC_SIGCHAR_VOID:
+                //dcArgVoid(container->cvm, self);
+                tally--;
+                break;
+            case DC_SIGCHAR_BOOL:
+                dcArgBool(container->cvm, SvTRUE(ST(i))); break;
+            case DC_SIGCHAR_CHAR:
+            case DC_SIGCHAR_UCHAR:
+                dcArgChar(container->cvm, SvIV(ST(i)));   break;
+            case DC_SIGCHAR_SHORT:
+            case DC_SIGCHAR_USHORT:
+                dcArgShort(container->cvm, SvIV(ST(i)));   break;
+            case DC_SIGCHAR_INT:
+            case DC_SIGCHAR_UINT:
+                dcArgInt(container->cvm, SvIV(ST(i)));   break;
+            case DC_SIGCHAR_LONG:
+            case DC_SIGCHAR_ULONG:
+                dcArgLong(container->cvm, SvIV(ST(i)));   break;
+            case DC_SIGCHAR_LONGLONG:
+            case DC_SIGCHAR_ULONGLONG:
+                dcArgLongLong(container->cvm, SvIV(ST(i)));   break;
+            case DC_SIGCHAR_FLOAT:
+                dcArgFloat(container->cvm, SvNV(ST(i)));   break;
+            case DC_SIGCHAR_DOUBLE:
+                dcArgDouble(container->cvm, SvNV(ST(i)));   break;
+            case DC_SIGCHAR_POINTER:
+                warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+                break;
+            case DC_SIGCHAR_STRING:
+                dcArgPointer(container->cvm, SvPV_nolen(ST(i)));   break;
+            case DC_SIGCHAR_STRUCT:
+                warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+                break;
+            case DC_SIGCHAR_ENDARG:
+                if (tally > items) // TODO: Don't do this is signature is var_list, etc.
+                    croak("Not enough arguments for callback.");
+                else if (tally < items)
+                    croak("Too many arguments for callback.");
+                done++;
+                break;
+            default:
+                warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+                break;
+        }
+        if (done) break;
+    }
+    //warn("Return type: %c at %s line %d.", container->ret_type, __FILE__, __LINE__);
+    switch(container->ret_type) {
+        case DC_SIGCHAR_VOID:
+            dcCallVoid(container->cvm, self);
+            XSRETURN_UNDEF;
+            break;
+        case DC_SIGCHAR_BOOL:
+            RETVAL = newSViv(dcCallBool(container->cvm, self)); break; // TODO: Make this a real t/f
+        case DC_SIGCHAR_CHAR:
+            RETVAL = newSViv(dcCallChar(container->cvm, self)); break;
+        case DC_SIGCHAR_UCHAR:
+            RETVAL = newSVuv(dcCallChar(container->cvm, self)); break;
+        case DC_SIGCHAR_SHORT:
+            RETVAL = newSViv(dcCallShort(container->cvm, self)); break;
+        case DC_SIGCHAR_USHORT:
+            RETVAL = newSVuv(dcCallShort(container->cvm, self)); break;
+        case DC_SIGCHAR_INT:
+            RETVAL = newSViv(dcCallInt(container->cvm, self)); break;
+        case DC_SIGCHAR_UINT:
+            RETVAL = newSVuv(dcCallInt(container->cvm, self)); break;
+        case DC_SIGCHAR_LONG:
+            RETVAL = newSViv(dcCallLong(container->cvm, self)); break;
+        case DC_SIGCHAR_ULONG:
+            RETVAL = newSVuv(dcCallLong(container->cvm, self)); break;
+        case DC_SIGCHAR_LONGLONG:
+            RETVAL = newSViv(dcCallLongLong(container->cvm, self)); break;
+        case DC_SIGCHAR_ULONGLONG:
+            RETVAL = newSVuv(dcCallLongLong(container->cvm, self)); break;
+        case DC_SIGCHAR_FLOAT:
+            RETVAL = newSVnv(dcCallFloat(container->cvm, self)); break;
+        case DC_SIGCHAR_DOUBLE:
+            RETVAL = newSVnv(dcCallDouble(container->cvm, self)); break;
+        case DC_SIGCHAR_POINTER:
+            warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+            XSRETURN_UNDEF;
+            break;
+        case DC_SIGCHAR_STRING:
+            RETVAL = newSVpv(dcCallPointer(container->cvm, self), 0);
+            break;
+        case DC_SIGCHAR_STRUCT:
+            warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+            XSRETURN_UNDEF;
+            break;
+        default:
+            warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
+            XSRETURN_UNDEF;
+            break;
+    }
+    //warn("here at %s line %d.", __FILE__, __LINE__);
+OUTPUT:
+    RETVAL
+
+
+SV *
+callX(DCCallback * self, ... )
+PREINIT:
+    dTHX;
+#ifdef USE_ITHREADS
+    PERL_SET_CONTEXT(my_perl);
+#endif
+    //AV * args = newAV();
 CODE:
     _callback * container = ((_callback*) dcbGetUserData(self));
+    const char * signature  = container->signature;
+    warn("signature: %s", signature);
+    /*
+    typedef struct _callback {
+        SV * cb;
+        const char * signature;
+        char ret_type;
+        SV * userdata;
+    } _callback;
+    */
+    /*
     int i;
     for (i = 1; i < items; ++i)
         av_push(args, ST(i));
@@ -299,9 +429,7 @@ CODE:
             warn("Unhandled return type [%c] at %s line %d.", container->ret_type, __FILE__, __LINE__);
             XSRETURN_UNDEF;
             break;
-    }
-OUTPUT:
-    RETVAL
+    }*/
 
 void
 Ximport( const char * package, ... )
@@ -316,27 +444,3 @@ CODE:
         warn("  item %d: %s", item, SvPV_nolen(ST(item)));
 
     //export_sub(ctx_stash, caller_stash, name);
-
-=pod
-
-OO version below
-
-=cut
-
-DCCallback *
-Dyn::Callback::new(const char * signature, CV * funcptr, void * userdata)
-CODE:
-    //RETVAL = dcbNewCallback(signature, funcptr, userdata);
-    RETVAL = dcbNewCallback(signature, callback_handler, userdata);
-OUTPUT:
-    RETVAL
-
-void
-userdata( DCCallback * self )
-CODE:
-    dcbGetUserData( self );
-
-void
-DESTROY(DCCallback * self)
-CODE:
-    dcbFreeCallback( self );

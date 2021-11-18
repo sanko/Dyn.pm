@@ -8,7 +8,7 @@ package Dyn::Load 0.01 {
     our %EXPORT_TAGS = (
         lib => [
             qw[ dlLoadLibrary dlFreeLibrary dlFindSymbol dlGetLibraryPath
-                dlSymsInit dlSymsCount dlSymsName
+                dlSymsInit dlSymsCleanup dlSymsCount dlSymsName dlSymsNameFromValue
             ]
         ]
     );
@@ -102,7 +102,7 @@ Expected parameters include:
 This function can be used to get a copy of the path to the library loaded with
 handle C<libhandle>.
 
-	dlGetLibraryPath()
+	my $len = dlGetLibraryPath($libhandle, $sOut, 1024);
 
 The parameter C<sOut> is a pointer to a buffer of size C<bufSize> (in bytes),
 to hold the output string.
@@ -128,16 +128,93 @@ always check.
 
 =head2 C<dlSymsInit( ... )>
 
+Returns a handle to the shared object specified by C<libPath> for use with
+other C<dlSyms*> functions.
 
+	my $dlsym = dlSymsInit();
 
+The C<dlSyms*> functions can be used to iterate over symbols. Since they can be
+used on libraries that are not linked, they are made for symbol name lookups,
+not to get symbols' addresses. For that refer to L<< C<dlFindSymbol( ...
+)>|/C<dlFindSymbol( ... )> >>.
+
+Expected parameters include:
+
+=over
+
+=item C<libPath> - path to the lib
+
+=back
+
+The handle must be freed with L<< C<dlSymsCleanup( ... )>|/C<dlSymsCleanup( ...
+)> >>.
 
 =head2 C<dlSymsCleanup( ... )>
 
+Frees the handle to the shared object created by L<< C<dlSymsInit( ...
+)>|/C<dlSymsInit( ... )> >>.
+
+	dlSymsCleanup( $dlsym );
+
+Expected parameters include:
+
+=over
+
+=item C<pSyms> - shared object
+
+=back
+
 =head2 C<dlSymsCount( ... )>
+
+Returns the number of exported symbols in the library.
+
+	my $count = dlSymsCount( $dlsym );
+
+Expected parameters include:
+
+=over
+
+=item C<pSyms> - shared object created by L<< C<dlSymsInit( ... )>|/C<dlSymsInit( ... )> >>.
+
+=back
 
 =head2 C<dlSymsName( ... )>
 
+Returns the name of the symbol at a certain index.
+
+	my $name = dlSymsName( $dlsym, 1 );
+
+Expected parameters include:
+
+=over
+
+=item C<pSyms> - shared object
+
+=item C<index> - ordinal index of desired symbol
+
+=back
+
+The name is returned as it would appear in C source code (mangled if C++,
+etc.).
+
 =head2 C<dlSymsNameFromValue( ... )>
+
+Returns the name of the symbol at a certain address.
+
+	my $name = dlSymsNameFromValue( $dlsym, ... );
+
+Expected parameters include:
+
+=over
+
+=item C<pSyms> - shared object
+
+=item C<value> - address of desired symbol
+
+=back
+
+The name is returned as it would appear in C source code (mangled if C++,
+etc.).
 
 =head1 LICENSE
 
