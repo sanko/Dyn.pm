@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use Test::More 0.98;
 use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib';
 use Dyn qw[:all];
@@ -98,10 +99,11 @@ subtest 'const char * cb( int, const char * )' => sub {
 };
 subtest 'void cb( )' => sub {
     my $called = 0;
-    my $cb     = dcbNewCallback(
+    my $cb;
+    $cb = dcbNewCallback(
         'v)v',
         sub {
-            my ($userdata) = @_;
+            my $userdata = dcbGetUserData($cb);
             if ( !$called++ ) {
                 is_deeply $userdata, [ 5, 'time', { anon => 'hash' } ], 'userdata array is correct';
                 diag 'inc value in userdata...';
@@ -114,9 +116,13 @@ subtest 'void cb( )' => sub {
         },
         [ 5, 'time', { anon => 'hash' } ]
     );
+    is_deeply dcbGetUserData($cb), [ 5, 'time', { anon => 'hash' } ],
+        'userdata is correct before all calls';
     isa_ok $cb , 'Dyn::Callback';
     $cb->call();    # original userdata
     $cb->call();    # modified userdata
+    is_deeply dcbGetUserData($cb), [ 6, 'time', { anon => 'hash' } ],
+        'userdata is correct after all calls';
 };
 
 =pod

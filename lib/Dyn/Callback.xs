@@ -97,7 +97,7 @@ static char callback_handler(DCCallback * cb, DCArgs * args, DCValue * result, v
     //warn("here at %s line %d.", __FILE__, __LINE__);
 
     // XXX: Does anyone expect this?
-    XPUSHs(container->userdata);
+    //XPUSHs(container->userdata);
 
     PUTBACK;
 
@@ -215,10 +215,10 @@ BOOT:
 #endif
 
 DCCallback *
-dcbNewCallback(const char * signature, SV * funcptr, SV * userdata);
+dcbNewCallback(const char * signature, SV * funcptr, ...);
 PREINIT:
-    _callback * container;
     dTHX;
+    _callback * container;
 #ifdef USE_ITHREADS
     PERL_SET_CONTEXT(my_perl);
 #endif
@@ -231,7 +231,7 @@ CODE:
     dcReset(container->cvm);
     container->signature = signature;
     container->cb = SvREFCNT_inc(funcptr);
-    container->userdata = SvREFCNT_inc(userdata);
+    container->userdata = items > 2 ? newRV_inc(ST(2)): &PL_sv_undef;
     int i;
     for (i = 0; container->signature[i+1] != '\0'; ++i ) {
         //warn("here at %s line %d.", __FILE__, __LINE__);
@@ -246,7 +246,7 @@ OUTPUT:
     RETVAL
 
 void
-dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * funcptr, SV * userdata);
+dcbInitCallback(DCCallback * pcb, const char * signature, DCCallbackHandler * funcptr, ...);
 PREINIT:
     dTHX;
     _callback * container;
@@ -257,7 +257,7 @@ CODE:
     container = (_callback*) dcbGetUserData(pcb);
     container->signature = signature;
     container->cb = SvREFCNT_inc(funcptr);
-    container->userdata = SvREFCNT_inc(userdata);
+    container->userdata = items > 3 ? newRV_inc(ST(3)): &PL_sv_undef;
     int i;
     for (i = 0; container->signature[i+1] != '\0'; ++i ) {
         //warn("here at %s line %d.", __FILE__, __LINE__);
@@ -270,16 +270,31 @@ CODE:
 
 void
 dcbFreeCallback(DCCallback * pcb);
+PREINIT:
+    dTHX;
+#ifdef USE_ITHREADS
+    PERL_SET_CONTEXT(my_perl);
+#endif
 CODE:
     _callback * container = ((_callback*) dcbGetUserData(pcb));
     dcFree(container->cvm);
     dcbFreeCallback( pcb );
+    // TODO: Free SVs
 
 SV *
 dcbGetUserData(DCCallback * pcb);
+PREINIT:
+    dTHX;
+#ifdef USE_ITHREADS
+    PERL_SET_CONTEXT(my_perl);
+#endif
+INIT:
+    RETVAL = (SV*) &PL_sv_undef;
 CODE:
     _callback * container = ((_callback*) dcbGetUserData(pcb));
-    RETVAL = container->userdata;
+    if (SvOK(container->userdata))
+        RETVAL = //SvRV(container->userdata);
+            SvREFCNT_inc(SvRV(container->userdata));
 OUTPUT:
     RETVAL
 
