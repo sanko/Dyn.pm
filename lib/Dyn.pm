@@ -181,6 +181,8 @@ mips, mips64, ppc32, ppc64, sparc, sparc64, etc.).
 
 Check out L<FFI::Platypus> for a more robust and mature FFI.
 
+Examples found in C<eg/>.
+
 =head1 LICENSE
 
 Copyright (C) Sanko Robinson.

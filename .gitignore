@@ -36,6 +36,7 @@ MYMETA.*
 eg/sdl.pl
 eg/scratch.pl
 eg/sugar.pl
+eg/undef.pl
 lib/Dyn/Sugar.pm
 extract/
 src/

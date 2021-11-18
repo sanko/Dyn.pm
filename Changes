@@ -2,6 +2,8 @@ Revision history for Perl extension Dyn.pm
 
 {{$NEXT}}
 
+0.02 2021-11-18T15:34:12Z
+
     - Callbacks work (better than before)
         - now store their own DCCallVM for speed and to use dyncall itself for arg handling
     - Documentation is somewhat less non-existent

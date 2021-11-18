@@ -139,6 +139,8 @@ mips, mips64, ppc32, ppc64, sparc, sparc64, etc.).
 
 Check out [FFI::Platypus](https://metacpan.org/pod/FFI%3A%3APlatypus) for a more robust and mature FFI.
 
+Examples found in `eg/`.
+
 # LICENSE
 
 Copyright (C) Sanko Robinson.
