@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use lib '../lib', '../blib/arch', '../blib/lib';
 use Dyn qw[:dc :dl :sugar];
-use File::Find;
 $|++;
 #
 my $path = 'C:\Windows\System32\user32.dll';

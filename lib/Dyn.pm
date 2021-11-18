@@ -1,4 +1,4 @@
-package Dyn 0.01 {
+package Dyn 0.02 {
     use strict;
     use warnings;
     use 5.030;

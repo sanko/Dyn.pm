@@ -1,4 +1,4 @@
-package Dyn::Call 0.01 {
+package Dyn::Call 0.02 {
     use strict;
     use warnings;
     use 5.030;
@@ -44,7 +44,7 @@ __END__
 
 =head1 NAME
 
-Dyn - dyncall Backed FFI
+Dyn::Call - Architecture-, OS- and Compiler-agnostic Function Call Semantics
 
 =head1 SYNOPSIS
 

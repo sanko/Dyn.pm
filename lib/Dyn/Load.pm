@@ -1,4 +1,4 @@
-package Dyn::Load 0.01 {
+package Dyn::Load 0.02 {
     use strict;
     use warnings;
     use 5.030;
@@ -21,7 +21,7 @@ __END__
 
 =head1 NAME
 
-Dyn::Load - dyncall Backed FFI
+Dyn::Load - FFI to Load Libaries and Access Their Symbols
 
 =head1 SYNOPSIS
 

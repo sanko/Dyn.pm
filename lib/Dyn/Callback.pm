@@ -1,4 +1,4 @@
-package Dyn::Callback 0.01 {
+package Dyn::Callback 0.02 {
     use strict;
     use warnings;
     use 5.030;
@@ -20,7 +20,7 @@ __END__
 
 =head1 NAME
 
-Dyn::Callback - dyncall Backed FFI
+Dyn::Callback - Perl Code as FFI Callbacks
 
 =head1 SYNOPSIS
 
@@ -77,7 +77,7 @@ Expected parameters include:
 
 =item C<code> - a code reference
 
-=item C<userdata> - arbitrary data
+=item C<userdata> - optional, arbitrary data
 
 =back
 
@@ -97,7 +97,7 @@ Expected parameters include:
 
 =item C<code> - a code reference
 
-=item C<userdata> - arbitrary data
+=item C<userdata> - optional, arbitrary data
 
 =back
 
@@ -129,6 +129,24 @@ Expected parameters include:
 =item C<pcb> - Dyn::Callback object to reinitialize
 
 =back
+
+=head2 C<call( ... )>
+
+Calls a Dyn::Callback object with the given parameters.
+
+    my $ret = call( $pcb, 5 );
+
+Expected parameters include:
+
+=over
+
+=item C<pcb> - Dyn::Callback object to reinitialize
+
+=item C<...> - optional arguments
+
+=back
+
+Returns the value matching the provided signature.
 
 =head1 LICENSE
 
