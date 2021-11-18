@@ -104,15 +104,19 @@ SKIP: {
         is dlGetLibraryPath( $lib, my $blah = '', length($lib_file) * 2 ), length($lib_file) + 1,
             'dlGetLibraryPath(...)';
         is $blah, $lib_file, '  $sOut is correct';
-		diag $lib_file;
-        my $dsyms = dlSymsInit($lib_file);
-        ok $dsyms,                   'dlSymsInit(...)';
-        ok dlSymsCount($dsyms) > 10, 'dlSymsCount(...) > 10';    # linker might export extra stuff
-        for ( 1 .. dlSymsCount($dsyms) - 1 ) {
-            diag '  -> ' . dlSymsName( $dsyms, $_ );
+        diag $lib_file;
+    SKIP: {
+            plan skip_all => 'ExtUtils::CBuilder will only build bundles but I need a dynlib on OSX'
+                if $^O eq 'darwin' && $lib_file =~ m[\.bundle$];
+            my $dsyms = dlSymsInit($lib_file);
+            ok $dsyms,                   'dlSymsInit(...)';
+            ok dlSymsCount($dsyms) > 10, 'dlSymsCount(...) > 10';  # linker might export extra stuff
+            for ( 1 .. dlSymsCount($dsyms) - 1 ) {
+                diag '  -> ' . dlSymsName( $dsyms, $_ );
+            }
+            dlSymsCleanup($dsyms);
+            is $dsyms, undef, 'dlSymsCleanup(...)';
         }
-        dlSymsCleanup($dsyms);
-        is $dsyms, undef, 'dlSymsCleanup(...)';
 
         #diag `nm $lib_file`;
         #diag dlSymsNameFromValue($dsyms, 0000000000001110);
