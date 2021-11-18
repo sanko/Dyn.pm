@@ -97,7 +97,7 @@ Returns a new C<CallVM> object on success.
 
 Destroy a CallVM instance.
 
-	dcFree( $cvm );
+    dcFree( $cvm );
 
 Expected parameters include:
 
@@ -183,7 +183,7 @@ These functions may be imported by name or with the C<:bind> tag.
 
 Pushes a boolean value onto the argument stack.
 
-	dcArgBool( $cvm, 1 ); # or 0, of course
+    dcArgBool( $cvm, 1 ); # or 0, of course
 
 Expected parameters include:
 
@@ -199,7 +199,7 @@ Expected parameters include:
 
 Pushes a char value onto the argument stack.
 
-	dcArgChar( $cvm, 'a' );
+    dcArgChar( $cvm, 'a' );
 
 Expected parameters include:
 
@@ -215,7 +215,7 @@ Expected parameters include:
 
 Pushes a short integer value onto the argument stack.
 
-	dcArgShort( $cvm, -500 );
+    dcArgShort( $cvm, -500 );
 
 Expected parameters include:
 
@@ -231,7 +231,7 @@ Expected parameters include:
 
 Pushes an integer value onto the argument stack.
 
-	dcArgInt( $cvm, -500 );
+    dcArgInt( $cvm, -500 );
 
 Expected parameters include:
 
@@ -247,7 +247,7 @@ Expected parameters include:
 
 Pushes a long integer value onto the argument stack.
 
-	dcArgLong( $cvm, -2147483647 );
+    dcArgLong( $cvm, -2147483647 );
 
 Expected parameters include:
 
@@ -263,7 +263,7 @@ Expected parameters include:
 
 Pushes a long long integer value onto the argument stack.
 
-	dcArgLongLong( $cvm, -9223372036854775807 );
+    dcArgLongLong( $cvm, -9223372036854775807 );
 
 Expected parameters include:
 
@@ -279,7 +279,7 @@ Expected parameters include:
 
 Pushes a single-precision floating point value onto the argument stack.
 
-	dcArgFloat( $cvm, 3.14 );
+    dcArgFloat( $cvm, 3.14 );
 
 Expected parameters include:
 
@@ -295,7 +295,7 @@ Expected parameters include:
 
 Pushes a double-precision floating point value onto the argument stack.
 
-	dcArgDouble( $cvm, 3.14 );
+    dcArgDouble( $cvm, 3.14 );
 
 Expected parameters include:
 
@@ -311,7 +311,7 @@ Expected parameters include:
 
 Pushes a pointer (C<void *>) value onto the argument stack.
 
-	dcArgPointer( $cvm, $struct );
+    dcArgPointer( $cvm, $struct );
 
 Expected parameters include:
 
@@ -327,7 +327,7 @@ Expected parameters include:
 
 Pushes a string (C<char *>) value onto the argument stack.
 
-	dcArgString( $cvm, 'John' );
+    dcArgString( $cvm, 'John' );
 
 Expected parameters include:
 
@@ -369,7 +369,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a boolean return value.
 
-	my $tf = dcCallBool( $cvm, $funcptr );
+    my $tf = dcCallBool( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -385,7 +385,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a char return value.
 
-	my $char = dcCallChar( $cvm, $funcptr );
+    my $char = dcCallChar( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -401,7 +401,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a short return value.
 
-	my $ret = dcCallShort( $cvm, $funcptr );
+    my $ret = dcCallShort( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -417,7 +417,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a integer return value.
 
-	my $sum = dcCallInt( $cvm, $funcptr );
+    my $sum = dcCallInt( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -433,7 +433,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a long return value.
 
-	my $val1 = dcCallLong( $cvm, $funcptr );
+    my $val1 = dcCallLong( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -449,7 +449,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a long long return value.
 
-	my $val2 = dcCallLongLong( $cvm, $funcptr );
+    my $val2 = dcCallLongLong( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -465,7 +465,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a float return value.
 
-	my $f = dcCallFloat( $cvm, $funcptr );
+    my $f = dcCallFloat( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -481,7 +481,7 @@ Expected parameters include:
 
 Invokes the function with the expectations of a double return value.
 
-	my $num = dcCallDouble( $cvm, $funcptr );
+    my $num = dcCallDouble( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -498,7 +498,7 @@ Expected parameters include:
 Invokes the function with a the expectations of a pointer (C<void *>) return
 value.
 
-	my $ptr = dcCallPointer( $cvm, $funcptr );
+    my $ptr = dcCallPointer( $cvm, $funcptr );
 
 Expected parameters include:
 
@@ -514,7 +514,7 @@ Expected parameters include:
 
 Invokes the function with a string (C<const char *>) return value.
 
-	my $str = dcCallString( $cvm, $funcptr );
+    my $str = dcCallString( $cvm, $funcptr );
 
 Expected parameters include:
 

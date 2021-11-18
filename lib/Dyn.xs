@@ -80,8 +80,8 @@ DESTROY(sub)
 CODE:
     warn("Now in Dyncall::DynXSub::DESTROY");
     //if(sub->fptr  != NULL) free(sub->fptr);
-	//if(sub->lib != NULL)   free(sub->syms);
-	//dcFree(sub->syms);
+    //if(sub->lib != NULL)   free(sub->syms);
+    //dcFree(sub->syms);
     free( sub );
 
 MODULE = Dyn::XSub  PACKAGE = Dyn::XSub
@@ -103,8 +103,8 @@ DESTROY(sub)
 CODE:
     warn("Now in Dyncall::XSub::DESTROY");
     //if(sub->fptr  != NULL) free(sub->fptr);
-	//if(sub->lib != NULL)   free(sub->syms);
-	//dcFree(sub->syms);
+    //if(sub->lib != NULL)   free(sub->syms);
+    //dcFree(sub->syms);
     free( sub );
 
 MODULE = Dyn  PACKAGE = Dyn
@@ -114,9 +114,9 @@ new(class, ...)
     SV* class;
 CODE:
     RETVAL = malloc(sizeof(Dyncall));
-	RETVAL->lib  = NULL;
-	RETVAL->syms = NULL;
-	RETVAL->cvm  = dcNewCallVM(4096/*@@@*/);
+    RETVAL->lib  = NULL;
+    RETVAL->syms = NULL;
+    RETVAL->cvm  = dcNewCallVM(4096/*@@@*/);
 OUTPUT:
     RETVAL
 
@@ -128,8 +128,8 @@ DESTROY(lib)
 CODE:
     printf("Now in NetconfigPtr::DESTROY\n");
     if(lib->lib  != NULL) dlFreeLibrary(lib->lib);
-	if(lib->syms != NULL) dlSymsCleanup(lib->syms);
-	dcFree(lib->cvm);
+    if(lib->syms != NULL) dlSymsCleanup(lib->syms);
+    dcFree(lib->cvm);
     free( lib );
 
 DCCallVM *
@@ -145,16 +145,16 @@ load(self, path)
     Dyncall * self
     char * path
 CODE:
-	//Data_Get_Struct(self, rb_dcLibHandle, h);
+    //Data_Get_Struct(self, rb_dcLibHandle, h);
     warn("%s", path);
-	RETVAL = dlLoadLibrary(path);
+    RETVAL = dlLoadLibrary(path);
     warn("A");
-	if(self->lib) {
+    if(self->lib) {
         warn("B");
-		dlFreeLibrary(self->lib);
+        dlFreeLibrary(self->lib);
         warn("C");
         warn("D");
-	}
+    }
     if (RETVAL)
         self->lib = RETVAL;
     else
@@ -176,9 +176,9 @@ init(self, path)
     Dyncall * self
     char * path
 CODE:
-	RETVAL = dlSymsInit(path);
-	if(self->lib)
-		dlSymsCleanup(self->syms);
+    RETVAL = dlSymsInit(path);
+    if(self->lib)
+        dlSymsCleanup(self->syms);
     if (RETVAL)
         self->syms = RETVAL;
     else
@@ -223,15 +223,15 @@ CODE:
     warn("... at %s line %d", __FILE__, __LINE__);
     DCCallVM   * cvm = self->cvm;
     warn("... at %s line %d", __FILE__, __LINE__);
-	dcReset(cvm);
+    dcReset(cvm);
     warn("... at %s line %d", __FILE__, __LINE__);
     RETVAL = malloc(sizeof(DynXSub));
     RETVAL->name = name;
     warn("... at %s line %d", __FILE__, __LINE__);
     RETVAL->sig  = sig;
     warn("... at %s line %d", __FILE__, __LINE__);
-	/* Get a pointer to the function and start pushing. */
-	RETVAL->fptr = /*(DCpointer)*/ dlFindSymbol(self->lib, name );
+    /* Get a pointer to the function and start pushing. */
+    RETVAL->fptr = /*(DCpointer)*/ dlFindSymbol(self->lib, name );
     warn("... at %s line %d", __FILE__, __LINE__);
     RETVAL->lib  = self;
     warn("... at %s line %d", __FILE__, __LINE__);
@@ -259,17 +259,17 @@ call(DLLib * lib, const char * name, const char * sig, ...)
 CODE:
     DCpointer    fptr;
     DCCallVM   * cvm = dcNewCallVM( 1024 );
-	dcReset(cvm);
-	/* Get a pointer to the function and start pushing. */
-	fptr = (DCpointer) dlFindSymbol(lib, name );
+    dcReset(cvm);
+    /* Get a pointer to the function and start pushing. */
+    fptr = (DCpointer) dlFindSymbol(lib, name );
     //warn("%s", cvm);
     //warn("%s", fptr);
     bool err = 0;
     Size_t i;
     char ret;
     for(i = 3; i <= items; ++i) {
-		char t = sig[i - 3];
-		// TODO: add support for calling convention mode(s)
+        char t = sig[i - 3];
+        // TODO: add support for calling convention mode(s)
         switch(t) {
             case DC_SIGCHAR_CC_PREFIX:
                 ++i; char t = sig[i - 3];
@@ -353,10 +353,10 @@ CODE:
                 //warn ();
             case SVt_PV:
                 warn("string at %s line %d", __FILE__, __LINE__);
-				switch(t) {
-					case 'Z': dcArgPointer(cvm, SvPV_nolen(itm)); break;  // String.
-					default : err = 1;                         break;
-				}
+                switch(t) {
+                    case 'Z': dcArgPointer(cvm, SvPV_nolen(itm)); break;  // String.
+                    default : err = 1;                         break;
+                }
                 break;
             case SVt_PVIV:
                 warn("... at %s line %d", __FILE__, __LINE__);
@@ -399,11 +399,11 @@ CODE:
                 err = 0;
                 break;
         }*/
-		if(err)
-			croak("syntax error in signature or type mismatch at argument %d", i);
-	}
+        if(err)
+            croak("syntax error in signature or type mismatch at argument %d", i);
+    }
     /* Get the return type and call the function. */
-	//switch(sig[i-1]) {
+    //switch(sig[i-1]) {
     switch (ret) {
         case DC_SIGCHAR_FLOAT:
             ST(0) = newSVnv(dcCallFloat(cvm, fptr)); XSRETURN(1); break;
@@ -450,20 +450,20 @@ void
 structTest( )
 CODE:
     {
-		typedef struct {
-			double a, b, c, d;
-		} S;
+        typedef struct {
+            double a, b, c, d;
+        } S;
 
-		size_t size;
-		DCstruct* s = dcNewStruct(4, DEFAULT_ALIGNMENT);
-		dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-		dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-		dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-		dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-		dcCloseStruct(s);
+        size_t size;
+        DCstruct* s = dcNewStruct(4, DEFAULT_ALIGNMENT);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcCloseStruct(s);
 
-		//DC_TEST_STRUCT_SIZE(S, s);
-		dcFreeStruct(s);
-	}
+        //DC_TEST_STRUCT_SIZE(S, s);
+        dcFreeStruct(s);
+    }
 
 =cut

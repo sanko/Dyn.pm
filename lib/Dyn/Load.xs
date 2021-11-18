@@ -20,9 +20,9 @@ INIT:
 void
 dlFreeLibrary(DLLib * pLib)
 CODE:
-	dlFreeLibrary(pLib);
-	SV* sv = (SV*) &PL_sv_undef;
-	sv_setsv(ST(0), sv);
+    dlFreeLibrary(pLib);
+    SV* sv = (SV*) &PL_sv_undef;
+    sv_setsv(ST(0), sv);
 
 DCpointer
 dlFindSymbol(DLLib * pLib, const char * pSymbolName);
@@ -31,9 +31,9 @@ int
 dlGetLibraryPath(DLLib * pLib, char * sOut, int bufSize);
 CODE:
     char bin[bufSize];
-	RETVAL = dlGetLibraryPath(pLib, bin, bufSize);
+    RETVAL = dlGetLibraryPath(pLib, bin, bufSize);
     sv_setpv((SV*)ST(1), bin);
-	SvSETMAGIC(ST(1));
+    SvSETMAGIC(ST(1));
 OUTPUT:
     RETVAL
 
@@ -43,9 +43,9 @@ dlSymsInit(const char * libPath);
 void
 dlSymsCleanup(DLSyms * pSyms);
 CODE:
-	dlSymsCleanup(pSyms);
-	SV* sv = (SV*) &PL_sv_undef;
-	sv_setsv(ST(0), sv);
+    dlSymsCleanup(pSyms);
+    SV* sv = (SV*) &PL_sv_undef;
+    sv_setsv(ST(0), sv);
 
 int
 dlSymsCount(DLSyms * pSyms);

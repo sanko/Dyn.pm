@@ -75,7 +75,7 @@ Note that everything here is subject to change before v1.0.
 
 Invokes the function according to the provided L<signature|/Signatures>.
 
-	my $value = call( dlLoadLibrary($path), 'pow', 'dd)d', 2.0, 10.0 );
+    my $value = call( dlLoadLibrary($path), 'pow', 'dd)d', 2.0, 10.0 );
 
 Expected parameters include:
 

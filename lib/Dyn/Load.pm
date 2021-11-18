@@ -26,7 +26,7 @@ Dyn::Load - dyncall Backed FFI
 =head1 SYNOPSIS
 
     use Dyn::Load qw[:all]; # Exports nothing by default
-	use Dyn::Call;
+    use Dyn::Call;
 
     my $lib = dlLoadLibrary( 'path/to/lib.so' );
     my $ptr = dlFindSymbol( $lib, 'add' );
@@ -36,7 +36,7 @@ Dyn::Load - dyncall Backed FFI
     Dyn::Call::dcArgInt( $cvm, 5 );
     Dyn::Call::dcArgInt( $cvm, 6 );
     Dyn::Call::dcCallInt( $cvm, $ptr ); #  '5 + 6 == 11';
-	dlFreeSymbol( $lib );
+    dlFreeSymbol( $lib );
 
 =head1 DESCRIPTION
 
@@ -53,7 +53,7 @@ Loads a dynamic library at C<libpath> and returns a handle to it for use in L<<
 C<dlFreeLibrary( ... )>|/C<dlFreeLibrary( ... )> >> and L<< C<dlFindSymbol( ...
 )>|/C<dlFindSymbol( ... )> >> calls.
 
-	my $lib = dlLoadLibrary( 'blah.dll' ); # Or .so, or just... "libmath", idk...
+    my $lib = dlLoadLibrary( 'blah.dll' ); # Or .so, or just... "libmath", idk...
 
 Passing C<undef> for the C<libpath> argument is valid, and returns a handle to
 the main executable of the calling code. Also, searching libraries in library
@@ -102,7 +102,7 @@ Expected parameters include:
 This function can be used to get a copy of the path to the library loaded with
 handle C<libhandle>.
 
-	my $len = dlGetLibraryPath($libhandle, $sOut, 1024);
+    my $len = dlGetLibraryPath($libhandle, $sOut, 1024);
 
 The parameter C<sOut> is a pointer to a buffer of size C<bufSize> (in bytes),
 to hold the output string.
@@ -131,7 +131,7 @@ always check.
 Returns a handle to the shared object specified by C<libPath> for use with
 other C<dlSyms*> functions.
 
-	my $dlsym = dlSymsInit();
+    my $dlsym = dlSymsInit();
 
 The C<dlSyms*> functions can be used to iterate over symbols. Since they can be
 used on libraries that are not linked, they are made for symbol name lookups,
@@ -154,7 +154,7 @@ The handle must be freed with L<< C<dlSymsCleanup( ... )>|/C<dlSymsCleanup( ...
 Frees the handle to the shared object created by L<< C<dlSymsInit( ...
 )>|/C<dlSymsInit( ... )> >>.
 
-	dlSymsCleanup( $dlsym );
+    dlSymsCleanup( $dlsym );
 
 Expected parameters include:
 
@@ -168,7 +168,7 @@ Expected parameters include:
 
 Returns the number of exported symbols in the library.
 
-	my $count = dlSymsCount( $dlsym );
+    my $count = dlSymsCount( $dlsym );
 
 Expected parameters include:
 
@@ -182,7 +182,7 @@ Expected parameters include:
 
 Returns the name of the symbol at a certain index.
 
-	my $name = dlSymsName( $dlsym, 1 );
+    my $name = dlSymsName( $dlsym, 1 );
 
 Expected parameters include:
 
@@ -201,7 +201,7 @@ etc.).
 
 Returns the name of the symbol at a certain address.
 
-	my $name = dlSymsNameFromValue( $dlsym, ... );
+    my $name = dlSymsNameFromValue( $dlsym, ... );
 
 Expected parameters include:
 

@@ -44,14 +44,14 @@ LIB_EXPORT int          ii2i (int a, int b) { return a + b;   } // same as add, 
 LIB_EXPORT const char * Z2Z  (char * input) { return "Okay!"; }
 LIB_EXPORT void         v2v  () { ; }
 LIB_EXPORT Human *      v2p  () {
-	struct Human * person = (Human*) malloc(sizeof(Human));
-	if (person != NULL) {
-		const char * name = "John Smith";
-		person->name = (char *) malloc(strlen(name) + 1);
-		strcpy(person->name, name);
-		person->dob  = 954214635;
-	}
-	return person;
+    struct Human * person = (Human*) malloc(sizeof(Human));
+    if (person != NULL) {
+        const char * name = "John Smith";
+        person->name = (char *) malloc(strlen(name) + 1);
+        strcpy(person->name, name);
+        person->dob  = 954214635;
+    }
+    return person;
 }
 LIB_EXPORT char * p2Z ( Human * person ) { return person->name; }
 LIB_EXPORT int    p2i ( Human * person ) { return person->dob;  }

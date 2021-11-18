@@ -22,9 +22,9 @@ dcNewCallVM(DCsize size);
 void
 dcFree(DCCallVM * vm);
 CODE:
-	dcFree(vm);
-	SV* sv = (SV*) &PL_sv_undef;
-	sv_setsv(ST(0), sv);
+    dcFree(vm);
+    SV* sv = (SV*) &PL_sv_undef;
+    sv_setsv(ST(0), sv);
 
 void
 dcMode(DCCallVM * vm, DCint mode);
