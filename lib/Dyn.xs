@@ -305,31 +305,35 @@ CODE:
                 ret = sig[ i - 2 ];
                 break;
             case DC_SIGCHAR_VOID:
-                dcArgPointer(cvm, NULL); break;
+                break;
             case DC_SIGCHAR_BOOL:
-                dcArgBool(cvm, SvNV(ST(i)) ? 1 : 0); break;
+                dcArgBool(cvm, (bool) SvIV(ST(i)) ? 1 : 0); break;
             case DC_SIGCHAR_UCHAR:
+                dcArgChar(cvm, (unsigned char) SvIV(ST(i))); break;
             case DC_SIGCHAR_CHAR:
-                dcArgChar(cvm, SvNV(ST(i))); break;
-
+                dcArgChar(cvm, (char) SvIV(ST(i))); break;
             case DC_SIGCHAR_FLOAT:
-                dcArgFloat(cvm, SvNV(ST(i))); break;
+                dcArgFloat(cvm, (float) SvNV(ST(i))); break;
             case DC_SIGCHAR_USHORT:
+                dcArgShort(cvm, (unsigned short) SvUV(ST(i))); break;
             case DC_SIGCHAR_SHORT:
-                dcArgShort(cvm, SvNV(ST(i))); break;
+                dcArgShort(cvm, (short) SvIV(ST(i))); break;
             case DC_SIGCHAR_UINT:
+                dcArgInt(cvm, (unsigned int) SvUV(ST(i))); break;
             case DC_SIGCHAR_INT:
-                dcArgInt(cvm, SvNV(ST(i))); break;
+                dcArgLong(cvm, (int) SvIV(ST(i))); break;
             case DC_SIGCHAR_ULONG:
+                dcArgLong(cvm, (unsigned long) SvNV(ST(i))); break;
             case DC_SIGCHAR_LONG:
-                dcArgLong(cvm, SvNV(ST(i))); break;
+                dcArgLong(cvm, (long) SvNV(ST(i))); break;
             //case DC_SIGCHAR_POINTER:
             //    dcArgPointer(cvm, SvIV(ST(i))); break;
             case DC_SIGCHAR_ULONGLONG:
+                dcArgLongLong(cvm, (unsigned long long) SvNV(ST(i))); break;
             case DC_SIGCHAR_LONGLONG:
-                dcArgLongLong(cvm, SvNV(ST(i))); break;
+                dcArgLongLong(cvm, (long long) SvNV(ST(i))); break;
             case DC_SIGCHAR_DOUBLE:
-                dcArgDouble(cvm, SvNV(ST(i))); break;
+                dcArgDouble(cvm, (double) SvNV(ST(i))); break;
             case DC_SIGCHAR_STRING:
                 dcArgPointer(cvm, SvPV_nolen(ST(i)));
                 break;
@@ -403,6 +407,7 @@ CODE:
             croak("syntax error in signature or type mismatch at argument %d", i);
     }
     /* Get the return type and call the function. */
+    //warn("ret == %c", ret);
     //switch(sig[i-1]) {
     switch (ret) {
         case DC_SIGCHAR_FLOAT:
@@ -414,9 +419,9 @@ CODE:
         case DC_SIGCHAR_CHAR:
             ST(0) = newSVnv(dcCallChar(cvm, fptr)); XSRETURN(1); break;
         case DC_SIGCHAR_SHORT:
-                ST(0) = newSViv(dcCallShort(cvm, fptr)); XSRETURN(1); break;
+            ST(0) = newSViv(dcCallShort(cvm, fptr)); XSRETURN(1); break;
         case DC_SIGCHAR_INT:
-            ST(0) = newSViv(dcCallDouble(cvm, fptr)); XSRETURN(1); break;
+            ST(0) = newSViv(dcCallInt(cvm, fptr)); XSRETURN(1); break;
         case DC_SIGCHAR_LONG:
             ST(0) = newSViv(dcCallLong(cvm, fptr)); XSRETURN(1); break;
         case DC_SIGCHAR_LONGLONG:
@@ -439,31 +444,3 @@ CODE:
         default:
             break;
     }
-
-=pod
-
-struct work is being done in repo but not yet installed with make
-
-#include <dyncall_struct.h>
-
-void
-structTest( )
-CODE:
-    {
-        typedef struct {
-            double a, b, c, d;
-        } S;
-
-        size_t size;
-        DCstruct* s = dcNewStruct(4, DEFAULT_ALIGNMENT);
-        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
-        dcCloseStruct(s);
-
-        //DC_TEST_STRUCT_SIZE(S, s);
-        dcFreeStruct(s);
-    }
-
-=cut

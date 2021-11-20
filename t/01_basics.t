@@ -1,6 +1,8 @@
 use strict;
 use Test::More 0.98;
 use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib';
+
+#use Object::Pad;
 use Dyn qw[:all];
 use File::Spec;
 $|++;
@@ -32,7 +34,8 @@ struct Human {
    char * name;
    int   dob;
 };
-LIB_EXPORT int          add  (int a, int b) { return a + b;   } // same as ii2i, honestly
+LIB_EXPORT int          add_i(int a,     int b) { return a + b; } // same as ii2i, honestly
+LIB_EXPORT float        add_f(float a, float b) { return a + b; }
 LIB_EXPORT const char * b2Z  (bool tf)      { return tf       ? "true" : "false"; }
 LIB_EXPORT const char * c2Z  (char a)       { return a == 'a' ? "!!!"  : "???"; }
 LIB_EXPORT const char * s2Z  (short a)      { return a ==  91 ? "!!!"  : a == -32767 ? "floor": "???"; }
@@ -56,6 +59,7 @@ LIB_EXPORT Human *      v2p  () {
 LIB_EXPORT char * p2Z ( Human * person ) { return person->name; }
 LIB_EXPORT int    p2i ( Human * person ) { return person->dob;  }
 LIB_EXPORT const char * cb  ( int (*f)(int) )  { return f(100) == 101 ? "Yes!" : "No..."; }
+LIB_EXPORT unsigned long sizeof_double() { return sizeof(double); }
 END
     }
     ok -e $source_file, "generated '$source_file'";
@@ -75,10 +79,11 @@ SKIP: {
                 objects      => $object_file,
                 module_name  => 't::hello',
                 dl_func_list => [
-                    qw[add
+                    qw[add_i add_f
                         b2Z c2Z ii2i s2Z j2Z l2Z f2Z d2Z
                         Z2Z v2v v2p p2Z p2i
-                        cb]
+                        cb
+                        sizeof_double]
                 ]
             );
         };
@@ -121,10 +126,20 @@ SKIP: {
         #diag `nm $lib_file`;
         #diag dlSymsNameFromValue($dsyms, 0000000000001110);
     };
+    subtest 'struct builder' => sub {
+        my $s = dcNewStruct( 4, 0 );    # DEFAULT_STRUCT_ALIGNMENT
+        dcStructField( $s, 'd', 0, 1 );
+        dcStructField( $s, 'd', 0, 1 );
+        dcStructField( $s, 'd', 0, 1 );
+        dcStructField( $s, 'd', 0, 1 );
+        dcCloseStruct($s);
+        is dcStructSize($s), ( 4 * call( $lib, 'sizeof_double', ')J' ) ), 'dcStructSize( ... )';
+        dcFreeStruct($s);
+    };
     subtest 'Dyn synopsis' => sub {
         use Dyn qw[:all];                                  # Exports nothing by default
         my $lib = dlLoadLibrary($lib_file);
-        my $ptr = dlFindSymbol( $lib, 'add' );
+        my $ptr = dlFindSymbol( $lib, 'add_i' );
         my $cvm = dcNewCallVM(1024);
         dcMode( $cvm, DC_CALL_C_DEFAULT );
         dcReset($cvm);
@@ -232,9 +247,9 @@ SKIP: {
         is dcCallString( $cvm, $ptr ), 'Zero', 'j2Z( 0 ) == "Zero"';
         diag 'reset for next call';
         dcReset($cvm);
-        diag 'pushing −2147483647 to arg stack';
+        diag 'pushing -2147483647 to arg stack';
         dcArgLong( $cvm, -2147483647 );
-        is dcCallString( $cvm, $ptr ), 'floor', 'j2Z( −2147483647 ) == "floor"';
+        is dcCallString( $cvm, $ptr ), 'floor', 'j2Z( -2147483647 ) == "floor"';
         diag 'reset for next call';
         dcReset($cvm);
         diag 'pushing 2147483647 to arg stack';
@@ -254,9 +269,9 @@ SKIP: {
         is dcCallString( $cvm, $ptr ), 'Zero', 'l2Z( 0 ) == "Zero"';
         diag 'reset for next call';
         dcReset($cvm);
-        diag 'pushing −9223372036854775807 to arg stack';
+        diag 'pushing -9223372036854775807 to arg stack';
         dcArgLongLong( $cvm, -9223372036854775807 );
-        is dcCallString( $cvm, $ptr ), 'floor', 'l2Z( −9223372036854775807 ) == "floor"';
+        is dcCallString( $cvm, $ptr ), 'floor', 'l2Z( -9223372036854775807 ) == "floor"';
         diag 'reset for next call';
         dcReset($cvm);
         diag 'pushing 2147483647 to arg stack';
@@ -276,7 +291,7 @@ SKIP: {
         is dcCallString( $cvm, $ptr ), 'Nice', 'f2Z( 5.3 ) == "Nice"';
         diag 'reset for next call';
         dcReset($cvm);
-        diag 'pushing −1.2 to arg stack';
+        diag 'pushing -1.2 to arg stack';
         dcArgFloat( $cvm, -1.2 );
         is dcCallString( $cvm, $ptr ), '???', 'f2Z( -1.2 ) == "???"';
         diag 'reset for next call';
@@ -298,7 +313,7 @@ SKIP: {
         is dcCallString( $cvm, $ptr ), 'Nice', 'd2Z( 5.3 ) == "Nice"';
         diag 'reset for next call';
         dcReset($cvm);
-        diag 'pushing −1.2 to arg stack';
+        diag 'pushing -1.2 to arg stack';
         dcArgDouble( $cvm, -1.2 );
         is dcCallString( $cvm, $ptr ), '???', 'd2Z( -1.2 ) == "???"';
         diag 'reset for next call';
@@ -364,8 +379,10 @@ SKIP: {
         dcFree($cvm);
     };
     subtest 'Dyn sugar' => sub {
-        is Dyn::call( $lib, 'add', 'dd)d', 2.0, 10.0 ), 2,
-            q[Dyn::call( $lib, 'add', 'dd)d', 2.0, 10.0 ) == 2];
+        is Dyn::call( $lib, 'add_i', 'ii)i', 2, 10 ), 12,
+            q[Dyn::call( $lib, 'add_i', 'ii)i', 2, 10 ) == 12];
+        is sprintf( '%.3f', Dyn::call( $lib, 'add_f', 'ff)f', 2.5, 10.3 ) ), '12.800',
+            q[Dyn::call( $lib, 'add_f', 'ff)f', 2.5, 10.3 ) == 12.800];
     };
     subtest 'Exported vars' => sub {
         is DC_ERROR_NONE,             0,  'DC_ERROR_NONE == 0';

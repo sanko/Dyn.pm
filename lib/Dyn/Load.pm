@@ -3,7 +3,7 @@ package Dyn::Load 0.02 {
     use warnings;
     use 5.030;
     use XSLoader;
-    XSLoader::load( __PACKAGE__, $Dyn::Load::VERSION );
+    XSLoader::load( __PACKAGE__, our $VERSION );
     use parent 'Exporter';
     our %EXPORT_TAGS = (
         lib => [

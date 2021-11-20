@@ -11,6 +11,7 @@ DynXSub   * T_PTROBJ_SPECIAL
 DCvoid      void
 DCCallVM  * T_PTROBJ_SPECIAL
 DCsize      T_INT
+DCsize    * T_INTPTR
 DCshort     T_SHORT
 DCint       T_INT
 DCbool      T_BOOL

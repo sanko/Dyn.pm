@@ -25,6 +25,18 @@
          "builder"
       ]
    },
+   "optional_features" : {
+      "object_pad" : {
+         "description" : "Object::Pad support",
+         "prereqs" : {
+            "runtime" : {
+               "requires" : {
+                  "Object::Pad" : "0.57"
+               }
+            }
+         }
+      }
+   },
    "prereqs" : {
       "configure" : {
          "requires" : {
@@ -44,6 +56,7 @@
             "IO::Uncompress::Unzip" : "0",
             "JSON::PP" : "2",
             "Module::Build::Tiny" : "0.035",
+            "Module::Load::Conditional" : "0",
             "Path::Tiny" : "0"
          }
       },
@@ -63,6 +76,7 @@
       },
       "test" : {
          "requires" : {
+            "Test2::V0" : "0",
             "Test::More" : "0.98"
          }
       }

@@ -35,6 +35,8 @@ Dyn includes...
 
     Functions can be imported with the `:dl` tag.
 
+Honestly, you should be using one of the above packages.
+
 # Functions
 
 While most of the upstream API is covered in the [Dyn::Call](https://metacpan.org/pod/Dyn%3A%3ACall),

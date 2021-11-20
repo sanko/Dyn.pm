@@ -3,7 +3,7 @@ package Dyn 0.02 {
     use warnings;
     use 5.030;
     use XSLoader;
-    XSLoader::load( __PACKAGE__, $Dyn::VERSION );
+    XSLoader::load( __PACKAGE__, our $VERSION );
     #
     use Dyn::Call qw[:all];
     use Dyn::Callback qw[:all];
@@ -62,6 +62,8 @@ dynamic libraries and code modules.
 Functions can be imported with the C<:dl> tag.
 
 =back
+
+Honestly, you should be using one of the above packages.
 
 =head1 Functions
 

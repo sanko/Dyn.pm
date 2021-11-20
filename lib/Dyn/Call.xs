@@ -11,6 +11,7 @@
 #include <dyncall_callf.h>
 #include <dyncall_signature.h>
 #include <dyncall_callback.h>
+//#include <dyncall/dyncall_signature.h>
 
 #include "lib/types.h"
 
@@ -150,6 +151,67 @@ dcVCallF(DCCallVM * vm, DCValue * result, DCpointer funcptr, const DCsigchar * s
 DCint
 dcGetError(DCCallVM* vm);
 
+
+
+void
+struct_test( )
+CODE:
+    {
+        typedef struct {
+            double a, b, c, d;
+        } S;
+
+        size_t size;
+        DCstruct* s = dcNewStruct(4, DEFAULT_ALIGNMENT);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcStructField(s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1);
+        dcCloseStruct(s);
+
+        //DC_TEST_STRUCT_SIZE(S, s);
+        dcFreeStruct(s);
+    }
+
+DCstruct *
+dcNewStruct( DCsize fieldCount, DCint alignment )
+
+void
+dcStructField( DCstruct* s, char type, DCint alignment, DCsize arrayLength )
+
+void
+dcSubStruct( DCstruct *s, DCsize fieldCount, DCint alignment, DCsize arrayLength )
+
+void
+dcCloseStruct( DCstruct *s )
+
+DCsize
+dcStructSize( DCstruct *s )
+
+DCsize
+dcStructAlignment( DCstruct *s )
+
+void
+dcFreeStruct( DCstruct * s )
+
+DCstruct *
+dcDefineStruct( const char * signature );
+
+=pod
+
+DC_API DCstruct*  dcNewStruct      (DCsize fieldCount, DCint alignment);
+DC_API void       dcStructField    (DCstruct* s, DCint type, DCint alignment, DCsize arrayLength);
+DC_API void       dcSubStruct      (DCstruct* s, DCsize fieldCount, DCint alignment, DCsize arrayLength);
+/* Each dcNewStruct or dcSubStruct call must be paired with a dcCloseStruct. */
+DC_API void       dcCloseStruct    (DCstruct* s);
+DC_API DCsize     dcStructSize     (DCstruct* s);
+DC_API DCsize     dcStructAlignment(DCstruct* s);
+DC_API void       dcFreeStruct     (DCstruct* s);
+
+DC_API DCstruct*  dcDefineStruct  (const char* signature);
+
+=cut
+
 BOOT:
 {
     HV *stash = gv_stashpv("Dyn::Call", 0);
@@ -195,4 +257,8 @@ BOOT:
     // Error codes
     newCONSTSUB(stash, "DC_ERROR_NONE", newSViv(DC_ERROR_NONE));
     newCONSTSUB(stash, "DC_ERROR_UNSUPPORTED_MODE", newSViv(DC_ERROR_UNSUPPORTED_MODE));
+
+    // Struct alignment
+    newCONSTSUB(stash, "DC_DEFAULT_ALIGNMENT", newSViv(DEFAULT_ALIGNMENT));
 }
+
