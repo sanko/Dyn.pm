@@ -2,6 +2,9 @@ Revision history for Perl extension Dyn.pm
 
 {{$NEXT}}
 
+    - Attach a native call to a perl sub with :Dyn attribute (demo and subject to change before v1.0)
+    - Cut down time to execute regular ol' variable based bound bindings by ~75%
+
 0.02 2021-11-18T15:34:12Z
 
     - Callbacks work (better than before)

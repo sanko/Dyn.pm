@@ -35,10 +35,14 @@ MYMETA.*
 *.zip
 eg/sdl.pl
 eg/scratch.pl
-eg/sugar.pl
 eg/undef.pl
-lib/Dyn/Sugar.pm
 extract/
 src/
 temp/
 
+eg/attrs.pl
+eg/libtest.cpp
+eg/libtest.so
+eg/sin.pl
+lib/Dyn/Sugar.pm
+object_pad.h

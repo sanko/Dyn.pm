@@ -1,8 +1,6 @@
 use strict;
 use Test::More 0.98;
 use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib';
-
-#use Object::Pad;
 use Dyn qw[:all];
 use File::Spec;
 $|++;
@@ -101,14 +99,17 @@ SKIP: {
             OS2::extLibpath_set(".\\$old");
         }
     }
-    #
-    $lib_file = File::Spec->rel2abs($lib_file);
     subtest 'Dyn::Load' => sub {
         $lib = dlLoadLibrary($lib_file);
         ok $lib, 'dlLoadLibrary(...)';
-        is dlGetLibraryPath( $lib, my $blah = '', length($lib_file) * 2 ), length($lib_file) + 1,
-            'dlGetLibraryPath(...)';
-        is $blah, $lib_file, '  $sOut is correct';
+    TODO: {
+            local $TODO = 'Some platforms do rel2abs and some do not';
+            my $___lib = ' ' x 1024;
+            my $_abs_  = File::Spec->rel2abs($lib_file);
+            is dlGetLibraryPath( $lib, $___lib, length $___lib ), length($_abs_) + 1,
+                'dlGetLibraryPath(...)';
+            is $___lib, $_abs_, '  $sOut is correct';
+        }
         diag $lib_file;
     SKIP: {
             plan skip_all => 'ExtUtils::CBuilder will only build bundles but I need a dynlib on OSX'
@@ -128,14 +129,16 @@ SKIP: {
     };
     subtest 'struct builder' => sub {
         my $s = dcNewStruct( 4, 0 );    # DEFAULT_STRUCT_ALIGNMENT
-        dcStructField( $s, 'd', 0, 1 );
-        dcStructField( $s, 'd', 0, 1 );
-        dcStructField( $s, 'd', 0, 1 );
-        dcStructField( $s, 'd', 0, 1 );
+        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
         dcCloseStruct($s);
-        is dcStructSize($s), ( 4 * call( $lib, 'sizeof_double', ')J' ) ), 'dcStructSize( ... )';
+        my $sizeof_double = Dyn::load( $lib_file, 'sizeof_double', ')J' );
+        is dcStructSize($s), ( 4 * $sizeof_double->call() ), 'dcStructSize( ... )';
         dcFreeStruct($s);
     };
+    diag 'Here';
     subtest 'Dyn synopsis' => sub {
         use Dyn qw[:all];                                  # Exports nothing by default
         my $lib = dlLoadLibrary($lib_file);
@@ -378,12 +381,6 @@ SKIP: {
         # Cleanup
         dcFree($cvm);
     };
-    subtest 'Dyn sugar' => sub {
-        is Dyn::call( $lib, 'add_i', 'ii)i', 2, 10 ), 12,
-            q[Dyn::call( $lib, 'add_i', 'ii)i', 2, 10 ) == 12];
-        is sprintf( '%.3f', Dyn::call( $lib, 'add_f', 'ff)f', 2.5, 10.3 ) ), '12.800',
-            q[Dyn::call( $lib, 'add_f', 'ff)f', 2.5, 10.3 ) == 12.800];
-    };
     subtest 'Exported vars' => sub {
         is DC_ERROR_NONE,             0,  'DC_ERROR_NONE == 0';
         is DC_ERROR_UNSUPPORTED_MODE, -1, 'DC_ERROR_UNSUPPORTED_MODE == -1';
@@ -443,15 +440,6 @@ SKIP: {
             dcFree($cvm);
         };
         #
-        subtest 'call from perl' => sub {
-            is $cb->call(100), 101, 'retval == 101';
-            is $cb->call(55),  10,  'retval == 10';
-            eval { $cb->call( 500, 'Hi!' ) };
-            ok $@ =~ m[Too many], 'passing too many arguments is a fatal error';
-            eval { $cb->call() };
-            ok $@ =~ m[Not enough], 'not passing enough arguments is a fatal error';
-            is $cb->call(100), 101, 'double check retval == 101';
-        };
 
 =fdsa
         #$cb->init();

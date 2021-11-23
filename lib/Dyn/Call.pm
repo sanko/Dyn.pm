@@ -1,4 +1,4 @@
-package Dyn::Call 0.02 {
+package Dyn::Call 0.03 {
     use strict;
     use warnings;
     use 5.030;
@@ -11,12 +11,14 @@ package Dyn::Call 0.02 {
                 dcArgFloat dcArgDouble
                 dcArgPointer
                 dcArgString
+                dcArgStruct
             ]
         ],
         callvm => [qw[dcNewCallVM dcFree dcMode dcReset]],
         call   => [qw[dcCallVoid dcCallInt dcCallPointer dcCallString]],
-        struct => [qw[dcNewStruct dcCloseStruct dcStructSize dcStructField dcFreeStruct]],
-        vars   => [
+        struct =>
+            [qw[dcNewStruct dcCloseStruct dcStructSize dcStructField dcSubStruct dcFreeStruct]],
+        vars => [
             qw[
                 DC_CALL_C_DEFAULT
                 DC_CALL_C_ELLIPSIS DC_CALL_C_ELLIPSIS_VARARGS
@@ -42,7 +44,7 @@ package Dyn::Call 0.02 {
                 DC_SIGCHAR_CC_ELLIPSIS_VARARGS DC_SIGCHAR_CC_CDECL DC_SIGCHAR_CC_STDCALL
                 DC_SIGCHAR_CC_FASTCALL_MS DC_SIGCHAR_CC_FASTCALL_GNU DC_SIGCHAR_CC_THISCALL_MS
                 DC_SIGCHAR_CC_THISCALL_GNU DC_SIGCHAR_CC_ARM_ARM DC_SIGCHAR_CC_ARM_THUMB
-                DC_SIGCHAR_CC_SYSCALL], qw[DC_DEFAULT_ALIGNMENT]
+                DC_SIGCHAR_CC_SYSCALL], qw[DEFAULT_ALIGNMENT]
         ]
     );
     @{ $EXPORT_TAGS{all} } = our @EXPORT_OK = map { @{ $EXPORT_TAGS{$_} } } keys %EXPORT_TAGS;
@@ -545,7 +547,7 @@ by name or with the C<:struct> tag.
 
 Creates a new C<DCstruct>.
 
-	my $struct = dcNewStruct( 4, DC_DEFAULT_ALIGNMENT );
+	my $struct = dcNewStruct( 4, DEFAULT_ALIGNMENT );
 
 Expected parameters include:
 
@@ -561,7 +563,7 @@ Expected parameters include:
 
 Adds a new field to the structure.
 
-	dcStructField( $struct, DC_SIGCHAR_INT, DC_DEFAULT_ALIGNMENT, 1 );
+	dcStructField( $struct, DC_SIGCHAR_INT, DEFAULT_ALIGNMENT, 1 );
 
 Expected parameters include:
 
@@ -581,7 +583,7 @@ Expected parameters include:
 
 Nests a structure inside of another.
 
-	dcSubStruct( $struct, 1, DC_DEFAULT_ALIGNMENT, 1 );
+	dcSubStruct( $struct, 1, DEFAULT_ALIGNMENT, 1 );
 
 Expected parameters include:
 
@@ -771,7 +773,7 @@ You may set the calling convention to use with L<< C<dcMode( ... )>|/C<dcMode(
 
 =over
 
-=item C<DC_DEFAULT_ALIGNMENT> - Default value for data structure alignment
+=item C<DEFAULT_ALIGNMENT> - Default value for data structure alignment
 
 =back
 

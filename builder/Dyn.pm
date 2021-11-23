@@ -59,7 +59,7 @@ sub alien {
     die "Can't build xs files under --pureperl-only\n" if $opt{'pureperl-only'};
     my $http     = HTTP::Tiny->new;
     my $response = $http->get('https://dyncall.org/download');
-    die "Failed to download %s: %s!", $response->{url}, $response->{content}
+    die sprintf "Failed to download %s: %s!", $response->{url}, $response->{content}
         unless $response->{success};
 
     #print "$response->{status} $response->{reason}\n";
@@ -153,7 +153,9 @@ sub alien {
             my $pre = Path::Tiny->cwd->child( qw[blib arch auto], $opt{meta}->name )->absolute;
             chdir $kid->absolute->stringify;
             warn($_) && system($_ )
-                for './configure --prefix=' . $pre->absolute, 'make', 'make install';
+                for './configure --prefix=' .
+                $pre->absolute,    # . ' CFLAGS="-Ofast" LDFLAGS="-Ofast"',
+                'make', 'make install';
             chdir $cwd->stringify;
         }
         else {
@@ -183,19 +185,20 @@ sub process_xs {
     my $c_file  = catfile( $tempdir, "$file_base.c" );
     require ExtUtils::ParseXS;
     mkpath( $tempdir, $opt{verbose}, oct '755' );
-    ExtUtils::ParseXS::process_file( filename => $source, prototypes => 0, output => $c_file );
+    ExtUtils::ParseXS::process_file( filename => $source, prototypes => 1, output => $c_file );
     my $version = $opt{meta}->version;
     require ExtUtils::CBuilder;
-    my $builder = ExtUtils::CBuilder->new( config => $opt{config}->values_set );
+    my $builder = ExtUtils::CBuilder->new( config => ( $opt{config}->values_set ) );
     my $pre     = Path::Tiny->cwd->child(qw[blib arch auto])->absolute;
+    my $obj     = $builder->object_file($c_file);
     my $ob_file = $builder->compile(
+        'C++'        => 1,
         source       => $c_file,
         defines      => { VERSION => qq/"$version"/, XS_VERSION => qq/"$version"/ },
         include_dirs =>
             [ curdir, dirname($source), $pre->child( $opt{meta}->name, 'include' )->stringify ],
-        extra_compiler_flags => ( $OP ? '-DOBJECT_PAD' : '-DNOOBJECT_PAD' )
 
-            #extra_compiler_flags => '-std=c99'
+        # extra_compiler_flags =>	( $OP ? '-DOBJECT_PAD' : '-DNOOBJECT_PAD' ) #.' -std=c99'
     );
     require DynaLoader;
     my $mod2fname
@@ -203,11 +206,12 @@ sub process_xs {
     mkpath( $archdir, $opt{verbose}, oct '755' ) unless -d $archdir;
     my $lib_file = catfile( $archdir, $mod2fname->( \@parts ) . '.' . $opt{config}->get('dlext') );
     my $paths    = ExtUtils::InstallPaths->new( dist_name => 'Object::Pad' );
-    my $op_lib_file = catfile(
-        $paths->install_destination('arch'),
-        qw[auto Object],
-        'Pad' . $opt{config}->get('dlext')
-    );
+
+    #my $op_lib_file = catfile(
+    #    $paths->install_destination('arch'),
+    #qw[auto Object],
+    #'Pad' . $opt{config}->get('dlext')
+    #);
     return $builder->link(
         extra_linker_flags => [
             '-L' . dirname($source),
