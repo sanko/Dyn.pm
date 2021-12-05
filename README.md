@@ -49,7 +49,7 @@ While most of the upstream API is covered in the [Dyn::Call](https://metacpan.or
         sub some_argless_function() : Dyn('somelib.so', '()v');
         some_argless_function();
 
-Be aware that this will look a lot more like the [NativeCall API in
+Be aware that this will look a lot more like [NativeCall from
 Raku](https://docs.raku.org/language/nativecall) before v1.0!
 
 The second line above looks like a normal Perl sub declaration but includes the

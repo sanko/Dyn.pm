@@ -79,7 +79,7 @@ C<Dyn>. The most simple use of C<Dyn> would look something like this:
 	sub some_argless_function() : Dyn('somelib.so', '()v');
 	some_argless_function();
 
-Be aware that this will look a lot more like the L<NativeCall API in
+Be aware that this will look a lot more like L<NativeCall from
 Raku|https://docs.raku.org/language/nativecall> before v1.0!
 
 The second line above looks like a normal Perl sub declaration but includes the
