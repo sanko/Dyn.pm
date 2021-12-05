@@ -4,8 +4,7 @@ use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib';
 use Dyn qw[:sugar];
 use FFI::Platypus 1.00;
 use Config;
-use Benchmark qw[cmpthese timethese];
-use Test::More;
+use Benchmark qw[cmpthese timethese :hireswallclock];
 
 # arbitrary benchmarks
 $|++;
@@ -32,10 +31,19 @@ my $sin_stdcall  = Dyn::load( $libfile, 'sin', '_sd)d' );
 my $sin_fastcall = Dyn::load( $libfile, 'sin', '_fd)d' );
 my $sin_thiscall = Dyn::load( $libfile, 'sin', '_#d)d' );
 #
+Dyn::attach( $libfile, 'sin', '(d)d',   '_attach_sin_default' );
+Dyn::attach( $libfile, 'sin', '(_:d)d', '_attach_sin_var' );
+Dyn::attach( $libfile, 'sin', '(_.d)d', '_attach_sin_ellipse' );
+Dyn::attach( $libfile, 'sin', '(_cd)d', '_attach_sin_cdecl' );
+Dyn::attach( $libfile, 'sin', '(_sd)d', '_attach_sin_std' );
+Dyn::attach( $libfile, 'sin', '(_fd)d', '_attach_sin_fc' );
+Dyn::attach( $libfile, 'sin', '(_#d)d', '_attach_sin_tc' );
+#
 my $ffi = FFI::Platypus->new( api => 1 );
 $ffi->lib($libfile);
 my $ffi_func = $ffi->function( sin => ['double'] => 'double' );
 $ffi->attach( [ sin => 'ffi_sin' ] => ['double'] => 'double' );
+#
 my $depth = 1000000;
 cmpthese(
     timethese(
@@ -44,31 +52,59 @@ cmpthese(
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin($x); $x++ }
             },
-            sin_ => sub {
+            attach_sin_default => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_default($x); $x++ }
+            },
+            attach_sin_var => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_var($x); $x++ }
+            },
+            attach_sin_ellipse => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_ellipse($x); $x++ }
+            },
+            attach_sin_cdecl => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_cdecl($x); $x++ }
+            },
+            attach_sin_std => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_std($x); $x++ }
+            },
+            attach_sin_fc => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_fc($x); $x++ }
+            },
+            attach_sin_tc => sub {
+                my $x = 0;
+                while ( $x < $depth ) { my $n = _attach_sin_tc($x); $x++ }
+            },
+            sub_sin_default => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_($x); $x++ }
             },
-            sin_var => sub {
+            sub_sin_var => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_var($x); $x++ }
             },
-            sin_ell => sub {
+            sub_sin_ell => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_ell($x); $x++ }
             },
-            sin_cdecl => sub {
+            sub_sin_cdecl => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_cdecl($x); $x++ }
             },
-            sin_std => sub {
+            sub_sin_std => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_std($x); $x++ }
             },
-            sin_fc => sub {
+            sub_sin_fc => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_fc($x); $x++ }
             },
-            sin_tc => sub {
+            sub_sin_tc => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin_tc($x); $x++ }
             },

@@ -150,12 +150,10 @@ char * clean(char *str) {
     /*warn("here at %s line %d", __FILE__, __LINE__);*/\
 
 static Call *
-_load(pTHX_ DLLib * lib, const char * symbol, const char * sig, const char * name ) {
+_load(pTHX_ DLLib * lib, const char * symbol, const char * sig) {
     if(lib == NULL)
         return NULL;
-    if (name == NULL)
-        name = symbol;
-    //warn("_load(%s, %s, %s, %s)", lib_path, symbol, sig, name);
+    //warn("_load(..., %s, %s)", symbol, sig);
     Call * RETVAL;
     Newx(RETVAL, 1, Call);
     RETVAL->lib = lib;
@@ -260,7 +258,7 @@ CODE:
     }
     else
         lib = dlLoadLibrary( (const char *)SvPV_nolen(ST(0)) );
-    RETVAL = _load(aTHX_ lib, func_name, sig, func_name); // TODO: Accept alternate name?
+    RETVAL = _load(aTHX_ lib, func_name, sig);
 OUTPUT:
     RETVAL
 
@@ -281,10 +279,10 @@ PREINIT:
     int pos;
 PPCODE:
     Call * call;
-    if (XSANY.any_ptr == NULL) {
+    /*if (XSANY.any_ptr == NULL) {
         croak("Malformed pointer"); // TODO: Better describe that this is wrong
         XSRETURN_EMPTY;
-    }
+    }*/
     call = (Call *) XSANY.any_ptr;
     pos = 0;
     //warn("call_Dyn( ... )");
@@ -299,26 +297,40 @@ PPCODE:
     //warn("call_attach( ... )");
     _call_
 
-CV *
-attach( ... )
+SV *
+attach(lib, const char * symbol_name, const char * sig, const char * func_name = NULL)
 PREINIT:
-    const char *  name;
     Call * call;
+    DLLib * lib;
+    //  $lib_file, 'add_i', '(ii)i' , '__add_i'
 CODE:
-    //warn("ix == %d | items == %d", ix, items);
-    name = (const char *) SvPV_nolen(ST(0));
+    if (SvROK(ST(0)) && sv_derived_from(ST(0), "Dyn::DLLib")) {
+        IV tmp = SvIV((SV*)SvRV(ST(0)));
+        lib = INT2PTR(DLLib *, tmp);
+    }
+    else
+        lib = dlLoadLibrary( (const char *)SvPV_nolen(ST(0)) );
 
+    //warn("ix == %d | items == %d", ix, items);
+    if (func_name == NULL)
+        func_name = symbol_name;
+
+    call = _load(aTHX_ lib, symbol_name, sig);
+    if (call == NULL)
+        croak("Failed to attach %s", symbol_name);
     /* Create a new XSUB instance at runtime and set it's XSANY.any_ptr to contain the
      * necessary user data. name can be NULL => fully anonymous sub!
     **/
     CV * cv;
     STMT_START {
-        cv = newXSproto_portable(name, XS_Dyn_call_attach, (char*)__FILE__, "$$");
+        cv = newXSproto_portable(func_name, XS_Dyn_call_Dyn, (char*)__FILE__, call->perl_sig);
+        //warn("N");
         if (cv == NULL)
             croak("ARG! Something went really wrong while installing a new XSUB!");
+        //warn("Q");
         XSANY.any_ptr = (void *) call;
     } STMT_END;
-    RETVAL = cv;
+    RETVAL = newRV_inc((SV*) cv);
 OUTPUT:
     RETVAL
 
@@ -415,7 +427,7 @@ PPCODE:
                 //warn("     => %s", (const char *) SvPV_nolen(lib));
                 char *sig, ret, met;
                 DLLib * _lib = dlLoadLibrary(SvPV_nolen(lib));
-                Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature, _now->name);
+                Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature);
                // warn("Z");
                 if (call != NULL) {
                     CV * cv;

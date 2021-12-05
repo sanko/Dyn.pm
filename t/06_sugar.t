@@ -79,7 +79,19 @@ SKIP: {
         my $add_i = Dyn::load( $lib, 'add_i', '(ii)i' );
         isa_ok $add_i, 'Dyn';
         is $add_i->call( 30, 6 ), 36, '$add_i->call( 30, 6 ) == 36 [bind with library object]';
-    }
+    };
+    subtest attach => sub {
+        Dyn::attach( $lib_file, 'add_i', '(ii)i', '__add_i' );
+        is __add_i( 2, 7 ), 9, '__add_i( 2, 7 ) == 9 [attach with user defined name]';
+
+        #diag Dyn::attach( $lib_file, 'add_i', '(ii)i' );
+        #use Dyn::Load;
+        #my $lib = Dyn::Load::dlLoadLibrary($lib_file);
+        #isa_ok $lib, 'Dyn::DLLib';
+        #my $add_i = Dyn::load( $lib, 'add_i', '(ii)i' );
+        #isa_ok $add_i, 'Dyn';
+        #is $add_i->call( 30, 6 ), 36, '$add_i->call( 30, 6 ) == 36 [bind with library object]';
+    };
 };
 done_testing;
 
