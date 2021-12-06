@@ -128,15 +128,18 @@ SKIP: {
         #diag dlSymsNameFromValue($dsyms, 0000000000001110);
     };
     subtest 'struct builder' => sub {
-        my $s = dcNewStruct( 4, 0 );    # DEFAULT_STRUCT_ALIGNMENT
-        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
-        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
-        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
-        dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
-        dcCloseStruct($s);
-        my $sizeof_double = Dyn::load( $lib_file, 'sizeof_double', ')J' );
-        is dcStructSize($s), ( 4 * $sizeof_double->call() ), 'dcStructSize( ... )';
-        dcFreeStruct($s);
+    TODO: {
+            local $TODO = 'struct support is not yet ready';
+            my $s = dcNewStruct( 4, 0 );    # DEFAULT_STRUCT_ALIGNMENT
+            dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+            dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+            dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+            dcStructField( $s, DC_SIGCHAR_DOUBLE, DEFAULT_ALIGNMENT, 1 );
+            dcCloseStruct($s);
+            my $sizeof_double = Dyn::wrap( $lib_file, 'sizeof_double', ')J' );
+            is dcStructSize($s), ( 4 * $sizeof_double->() ), 'dcStructSize( ... )';
+            dcFreeStruct($s);
+        }
     };
     diag 'Here';
     subtest 'Dyn synopsis' => sub {

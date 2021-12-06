@@ -16,7 +16,7 @@ package Dyn 0.03 {
         dc    => [@Dyn::Call::EXPORT_OK],
         dcb   => [@Dyn::Callback::EXPORT_OK],
         dl    => [@Dyn::Load::EXPORT_OK],
-        sugar => [qw[call load MODIFY_SCALAR_ATTRIBUTES MODIFY_CODE_ATTRIBUTES AUTOLOAD]]
+        sugar => [qw[wrap MODIFY_SCALAR_ATTRIBUTES MODIFY_CODE_ATTRIBUTES AUTOLOAD]]
     );
     @{ $EXPORT_TAGS{all} } = our @EXPORT_OK = map { @{ $EXPORT_TAGS{$_} } } keys %EXPORT_TAGS;
 };
@@ -99,11 +99,12 @@ All of the following methods may be imported by name or with the C<:sugar> tag.
 
 Note that everything here is subject to change before v1.0.
 
-=head2 C<load( ... )>
+=head2 C<wrap( ... )>
 
 Creates a wrapper around a given symbol in a given library.
 
-	my $pow = Dyn::load( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+	my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+	warn $pow->(5, 10); # 5**10
 
 Expected parameters include:
 
@@ -111,27 +112,13 @@ Expected parameters include:
 
 =item C<lib> - pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ... )> >> or the path of the library as a string
 
-=item C<name> - the name of the symbol to call
+=item C<symbol_name> - the name of the symbol to call
 
 =item C<signature> - signature defining argument types, return type, and optionally the calling convention used
 
 =back
 
-=head2 C<call( ... )>
-
-Invokes the function according to the provided L<signature|/Signatures>.
-
-	my $value = $pow->call( 2.0, 10 ); # Same as Dyn::call( $pow, 2.0, 10 )
-
-Expected parameters include:
-
-=over
-
-=item C<bind> - C<Dyn> object bound with C<load( ... )>
-
-=item C<...> - any arguments to bind to the call
-
-=back
+Returns a code reference.
 
 =head1 Signatures
 

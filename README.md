@@ -69,28 +69,20 @@ All of the following methods may be imported by name or with the `:sugar` tag.
 
 Note that everything here is subject to change before v1.0.
 
-## `load( ... )`
+## `wrap( ... )`
 
 Creates a wrapper around a given symbol in a given library.
 
-        my $pow = Dyn::load( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+        my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+        warn $pow->(5, 10); # 5**10
 
 Expected parameters include:
 
 - `lib` - pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
-- `name` - the name of the symbol to call
+- `symbol_name` - the name of the symbol to call
 - `signature` - signature defining argument types, return type, and optionally the calling convention used
 
-## `call( ... )`
-
-Invokes the function according to the provided [signature](#signatures).
-
-        my $value = $pow->call( 2.0, 10 ); # Same as Dyn::call( $pow, 2.0, 10 )
-
-Expected parameters include:
-
-- `bind` - `Dyn` object bound with `load( ... )`
-- `...` - any arguments to bind to the call
+Returns a code reference.
 
 # Signatures
 

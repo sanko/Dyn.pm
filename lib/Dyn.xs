@@ -239,8 +239,8 @@ MODULE = Dyn PACKAGE = Dyn
 void
 DESTROY(...)
 CODE:
-    IV tmp = SvIV((SV*) SvRV(ST(0)));
-    Call * call = INT2PTR(Call *, tmp);
+    Call * call;
+    call = (Call *) XSANY.any_ptr;
     if (call == NULL)      return;
     if (call->lib != NULL) dlFreeLibrary( call->lib );
     if (call->cvm != NULL) dcFree(call->cvm);
@@ -248,8 +248,18 @@ CODE:
     if (call->perl_sig != NULL ) Safefree( call->perl_sig );
     Safefree(call);
 
-Call *
-load(lib, const char * func_name, const char * sig, ...)
+void
+call_Dyn(...)
+PREINIT:
+    int pos;
+PPCODE:
+    Call * call;
+    call = (Call *) XSANY.any_ptr;
+    pos = 0;
+    _call_
+
+SV *
+wrap(lib, const char * func_name, const char * sig, ...)
 CODE:
     DLLib * lib;
     if (SvROK(ST(0)) && sv_derived_from(ST(0), "Dyn::DLLib")) {
@@ -258,35 +268,18 @@ CODE:
     }
     else
         lib = dlLoadLibrary( (const char *)SvPV_nolen(ST(0)) );
-    RETVAL = _load(aTHX_ lib, func_name, sig);
+
+    Call * call = _load(aTHX_ lib, func_name, sig);
+    CV * cv;
+    STMT_START {
+        cv = newXSproto_portable(NULL, XS_Dyn_call_Dyn, (char*)__FILE__, call->perl_sig);
+        if (cv == NULL)
+            croak("ARG! Something went really wrong while installing a new XSUB!");
+        XSANY.any_ptr = (void *) call;
+    } STMT_END;
+    RETVAL = sv_bless(newRV_inc((SV*) cv), gv_stashpv((char *) "Dyn", 1));
 OUTPUT:
     RETVAL
-
-void
-call(...)
-PREINIT:
-    int pos;
-PPCODE:
-    IV tmp = SvIV((SV*) SvRV(ST(0)));
-    Call * call = INT2PTR(Call *, tmp);
-    pos = 1;
-    //warn("call( ... )");
-    _call_
-
-void
-call_Dyn(...)
-PREINIT:
-    int pos;
-PPCODE:
-    Call * call;
-    /*if (XSANY.any_ptr == NULL) {
-        croak("Malformed pointer"); // TODO: Better describe that this is wrong
-        XSRETURN_EMPTY;
-    }*/
-    call = (Call *) XSANY.any_ptr;
-    pos = 0;
-    //warn("call_Dyn( ... )");
-    _call_
 
 void
 call_attach(Call * call, ...)
@@ -337,14 +330,20 @@ OUTPUT:
 void
 MODIFY_CODE_ATTRIBUTES(char * name, void * code, ...)
 PREINIT:
-    I32 i;
-    STRLEN attrlen;
+    int i;
+    size_t attrlen;
     dXSTARG;
 PPCODE:
     //warn("Here: ix == %d", ix);
     //warn ("GvENAME(CvGV(code)): %s", GvENAME(CvGV((SV *) code)));
-    strcat(name, "::");
-    strcat(name, GvENAME(CvGV((SV *) code)));
+    char * full_name;
+    char * ename = GvENAME(CvGV((SV *) code));
+    Newxz( full_name, strlen(name) + strlen(ename) + 2 + 1, char);
+    strcpy(full_name, name);
+    strcat(full_name, "::");
+    strcat(full_name, ename);
+    //warn("%s", full_name);
+    
     for (i = 2; i < items; ++i) {
         //warn("A");
         const char * attr = SvPV_const(ST(i), attrlen);
@@ -382,6 +381,7 @@ PPCODE:
             symbol = clean(symbol);
         //warn("E");
         // named subroutine
+        
         Delayed * _now;
         Newx(_now, 1, Delayed);
 
@@ -394,11 +394,27 @@ PPCODE:
         Newx(_now->symbol, strlen(symbol) +1, char);
         memcpy((void *) _now->symbol, symbol, strlen(symbol)+1);
 
-        Newx(_now->name, strlen(name)+1, char);
-        memcpy((void *) _now->name, name, strlen(name)+1);
+        Newx(_now->name, strlen(full_name)+1, char);
+        memcpy((void *) _now->name, full_name, strlen(full_name)+1);
 
         _now->next = delayed;
         delayed = _now;
+    }
+    Safefree(full_name);
+
+void
+END( ... )    
+PPCODE:
+    Delayed * holding;
+    while (delayed != NULL) {
+        //warn ("killing %s...", delayed->name);
+        Safefree(delayed->library);
+        Safefree(delayed->signature);
+        Safefree(delayed->symbol);
+        Safefree(delayed->name); 
+        holding = delayed->next;
+        Safefree(delayed);
+        delayed = holding;
     }
 
 void
@@ -447,6 +463,11 @@ PPCODE:
                     //warn("AUTOLOAD( ... )");
                     _call_
                     _prev->next = _now->next;
+                    
+                    Safefree(_now->library);
+                    Safefree(_now->signature);
+                    Safefree(_now->symbol);
+                    Safefree(_now->name); 
                     Safefree(_now);
                 }
                 else

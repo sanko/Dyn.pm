@@ -70,15 +70,15 @@ SKIP: {
         is add( 2, 7 ),    9,  'add( 2, 7 ) == 9 [attach with user defined name]';
     };
     subtest load_call => sub {
-        my $add = Dyn::load( $lib_file, 'add_i', '(ii)i' );
+        my $add = Dyn::wrap( $lib_file, 'add_i', '(ii)i' );
         isa_ok $add, 'Dyn';
-        is $add->call( 2, 7 ), 9, '$add->call( 2, 7 ) == 9 [bind with library name]';
+        is $add->( 2, 7 ), 9, '$add->( 2, 7 ) == 9 [bind with library name]';
         use Dyn::Load;
         my $lib = Dyn::Load::dlLoadLibrary($lib_file);
         isa_ok $lib, 'Dyn::DLLib';
-        my $add_i = Dyn::load( $lib, 'add_i', '(ii)i' );
+        my $add_i = Dyn::wrap( $lib, 'add_i', '(ii)i' );
         isa_ok $add_i, 'Dyn';
-        is $add_i->call( 30, 6 ), 36, '$add_i->call( 30, 6 ) == 36 [bind with library object]';
+        is $add_i->( 30, 6 ), 36, '$add_i->( 30, 6 ) == 36 [bind with library object]';
     };
     subtest attach => sub {
         Dyn::attach( $lib_file, 'add_i', '(ii)i', '__add_i' );

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use lib '../lib', '../blib/arch', '../blib/lib';
-use Dyn qw[:dc :dl :sugar];
+use Dyn qw[:sugar :dl];
 $|++;
 #
 my $path = 'C:\Windows\System32\user32.dll';
@@ -15,4 +15,4 @@ CORE::say 'user32 has MessageBoxA()? ' . ( dlFindSymbol( $lib, 'MessageBoxA' ) ?
 CORE::say 'user32 has NonExistant()? ' . ( dlFindSymbol( $lib, 'NonExistant' ) ? 'yes' : 'no' );
 #
 CORE::say 'MessageBoxA(...) = ' .
-    Dyn::load( $lib, 'MessageBoxA', '(IZZI)i' )->call( 0, 'JAPH!', 'Hello, World', 0 );
+    Dyn::wrap( $lib, 'MessageBoxA', '(IZZI)i' )->( 0, 'JAPH!', 'Hello, World', 0 );
