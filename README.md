@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/linux.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/windows.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/osx.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Dyn.svg)](https://metacpan.org/release/Dyn)
+[![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/linux.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/windows.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/osx.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/freebsd.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Dyn.svg)](https://metacpan.org/release/Dyn)
 # NAME
 
 Dyn - dyncall Backed FFI

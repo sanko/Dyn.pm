@@ -76,7 +76,7 @@ package Dyn 0.03 {
 
                 #ddx [$volume, $directories, $file];
                 $file = $file . '.' . $so if $file !~ m[\.$so(\.[\d\.])?$];
-                $file .= '.' . $1 if defined $version &&
+                $file .= '.' . $1 if defined $version && $^O !~ /bsd/ &&
 
                     #!defined $Config{ignore_versioned_solibs} &&
                     version->parse($version)->stringify =~ m[^v?(.+)$] && $1 > 0;
