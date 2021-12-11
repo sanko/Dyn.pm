@@ -47,6 +47,7 @@ char * clean(char *str) {
 }
 
 #define _call_ \
+    dXSTARG;\
     /*//warn("items == %d", items);*/\
     /*//warn("[%d] %s", ix, name );*/ \
     if (call != NULL) { \
@@ -124,7 +125,8 @@ char * clean(char *str) {
                 ST(0) = newSViv(dcCallLongLong(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_POINTER:\
-                ST(0) = newSVnv(dcCallDouble(call->cvm, call->fptr)); XSRETURN(1); \
+                /*ST(0) = newSViv(dcCallPointer(call->cvm, call->fptr)); XSRETURN(1);*/ \
+                sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; XSRETURN(1);\
                 break;\
             case DC_SIGCHAR_UCHAR:\
             case DC_SIGCHAR_USHORT:\
@@ -134,7 +136,7 @@ char * clean(char *str) {
                 ST(0) = newSVuv(dcCallLongLong(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_STRING:\
-                ST(0) = newSVpvn_flags((const char *) dcCallPointer(call->cvm, call->fptr), 0, SVs_TEMP); XSRETURN(1); \
+                sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; XSRETURN(1);\
                 break;\
             case DC_SIGCHAR_VOID:\
                 dcCallVoid(call->cvm, call->fptr); XSRETURN_EMPTY; \
@@ -237,7 +239,7 @@ _load(pTHX_ DLLib * lib, const char * symbol, const char * sig) {
         };
     }
     //warn("104");
-    ////warn("Now: %s|%s|%c", RETVAL->perl_sig, RETVAL->sig, RETVAL->ret);
+    //warn("Now: %s|%s|%c", RETVAL->perl_sig, RETVAL->sig, RETVAL->ret);
     return RETVAL;
 }
 
@@ -403,10 +405,15 @@ PPCODE:
                 //SV * lib = get_sv(_now->library, TRUE);
                 //warn("     => %s", (const char *) SvPV_nolen(lib));
                 char *sig, ret, met;
-
-                DLLib * _lib = dlLoadLibrary((const char *) SvPV_nolen(lib));
-                if (_lib == NULL)
-                    croak("Failed to load %s", SvPV_nolen(lib));
+				const char * lib_name = SvPV_nolen(lib);
+                DLLib * _lib = dlLoadLibrary( lib_name );
+                if (_lib == NULL) {
+#if defined(_WIN32) || defined(__WIN32__)
+				unsigned int err = GetLastError();
+				warn ("GetLastError() == %d", err);
+#endif					
+                    croak("Failed to load %s", lib_name);
+				}
                 Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature );
 
                 //warn("Z");

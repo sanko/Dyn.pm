@@ -18,6 +18,7 @@ our $libfile
         '/lib/x86_64-linux-gnu/libm.so.6' :
     '/lib/libm.so.6';
 #
+sub sin_attach : Native($libfile) : Signature('(d)d') : Symbol('sin') {...}
 sub sin_ : Native($libfile) : Signature('(d)d') : Symbol('sin');
 sub sin_var : Native($libfile) : Signature('(_:d)d') : Symbol('sin');
 sub sin_ell : Native($libfile) : Signature('(_.d)d') : Symbol('sin');
