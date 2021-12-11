@@ -18,13 +18,13 @@ our $libfile
         '/lib/x86_64-linux-gnu/libm.so.6' :
     '/lib/libm.so.6';
 #
-sub sin_ : Dyn(${libfile}, '(d)d',   'sin');
-sub sin_var : Dyn(${libfile}, '(_:d)d', 'sin');
-sub sin_ell : Dyn(${libfile}, '(_.d)d', 'sin');
-sub sin_cdecl : Dyn(${libfile}, '(_cd)d', 'sin');
-sub sin_std : Dyn(${libfile}, '(_sd)d', 'sin');
-sub sin_fc : Dyn(${libfile}, '(_fd)d', 'sin');
-sub sin_tc : Dyn(${libfile}, '(_#d)d', 'sin');
+sub sin_ : Native($libfile) : Signature('(d)d') : Symbol('sin');
+sub sin_var : Native($libfile) : Signature('(_:d)d') : Symbol('sin');
+sub sin_ell : Native($libfile) : Signature('(_.d)d') : Symbol('sin');
+sub sin_cdecl : Native($libfile) : Signature('(_cd)d') : Symbol('sin');
+sub sin_std : Native($libfile) : Signature('(_sd)d') : Symbol('sin');
+sub sin_fc : Native($libfile) : Signature('(_fd)d') : Symbol('sin');
+sub sin_tc : Native($libfile) : Signature('(_#d)d') : Symbol('sin');
 #
 my $sin_default  = Dyn::wrap( $libfile, 'sin', 'd)d' );
 my $sin_vararg   = Dyn::wrap( $libfile, 'sin', '_:d)d' );
@@ -50,7 +50,7 @@ $ffi->attach( [ sin => 'ffi_sin' ] => ['double'] => 'double' );
 my $depth = 1000;
 cmpthese(
     timethese(
-        -10,
+        -5,
         {   perl => sub {
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin($x); $x++ }

@@ -12,7 +12,7 @@ my $lib;
 # Build a library
 use ExtUtils::CBuilder;
 use File::Spec;
-our ( $source_file, $object_file, $lib_file );
+my ( $source_file, $object_file, $lib_file );
 subtest 'ExtUtils::CBuilder' => sub {
     my $b = ExtUtils::CBuilder->new( quiet => 0 );
     ok $b, 'created EU::CB object';
@@ -61,14 +61,6 @@ SKIP: {
             OS2::extLibpath_set(".\\$old");
         }
     }
-    subtest sugar => sub {
-
-        #warn ${lib_file};
-        sub add_i : Dyn( ${lib_file}, '(ii)i');
-        sub add : Dyn( ${lib_file}, '(ii)i', 'add_i');
-        is add_i( 30, 6 ), 36, 'add_i( 30, 6 ) == 36 [attach to symbol name]';
-        is add( 2, 7 ),    9,  'add( 2, 7 ) == 9 [attach with user defined name]';
-    };
     subtest load_call => sub {
         my $add = Dyn::wrap( $lib_file, 'add_i', '(ii)i' );
         isa_ok $add, 'Dyn';
@@ -91,6 +83,22 @@ SKIP: {
         #my $add_i = Dyn::load( $lib, 'add_i', '(ii)i' );
         #isa_ok $add_i, 'Dyn';
         #is $add_i->call( 30, 6 ), 36, '$add_i->call( 30, 6 ) == 36 [bind with library object]';
+    };
+    subtest sugar => sub {
+        diag $lib_file;
+        use Config;
+        diag( $Config{so} );
+        sub add_i : Native( $lib_file ) : Signature('(ii)i');
+        sub add : Native( $lib_file ) : Signature('(ii)i') : Symbol('add_i');
+        is add_i( 30, 6 ), 36, 'add_i( 30, 6 ) == 36 [attach to symbol name]';
+        is add( 2, 7 ),    9,  'add( 2, 7 ) == 9 [attach with user defined name]';
+    };
+    subtest synopsis => sub {
+        use Dyn qw[:sugar];
+        sub pow :
+            Native( $^O eq 'MSWin32' ? 'ntdll.dll' : $^O eq 'darwin' ? 'libm.dylib' : 'libm', v6 )
+            : Signature( '(dd)d' );
+        is pow( 2, 10 ), 1024, 'pow(2, 10) portability test';
     };
 };
 done_testing;

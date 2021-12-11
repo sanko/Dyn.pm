@@ -547,7 +547,7 @@ by name or with the C<:struct> tag.
 
 Creates a new C<DCstruct>.
 
-	my $struct = dcNewStruct( 4, DEFAULT_ALIGNMENT );
+    my $struct = dcNewStruct( 4, DEFAULT_ALIGNMENT );
 
 Expected parameters include:
 
@@ -563,7 +563,7 @@ Expected parameters include:
 
 Adds a new field to the structure.
 
-	dcStructField( $struct, DC_SIGCHAR_INT, DEFAULT_ALIGNMENT, 1 );
+    dcStructField( $struct, DC_SIGCHAR_INT, DEFAULT_ALIGNMENT, 1 );
 
 Expected parameters include:
 
@@ -583,7 +583,7 @@ Expected parameters include:
 
 Nests a structure inside of another.
 
-	dcSubStruct( $struct, 1, DEFAULT_ALIGNMENT, 1 );
+    dcSubStruct( $struct, 1, DEFAULT_ALIGNMENT, 1 );
 
 Expected parameters include:
 

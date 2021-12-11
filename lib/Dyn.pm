@@ -2,6 +2,10 @@ package Dyn 0.03 {
     use strict;
     use warnings;
     no warnings 'redefine';
+    use File::Spec;
+    use Config;
+    use Sub::Util qw[subname];
+    use Text::ParseWords;
     use 5.030;
     use XSLoader;
     XSLoader::load( __PACKAGE__, our $VERSION );
@@ -19,6 +23,74 @@ package Dyn 0.03 {
         sugar => [qw[wrap MODIFY_SCALAR_ATTRIBUTES MODIFY_CODE_ATTRIBUTES AUTOLOAD]]
     );
     @{ $EXPORT_TAGS{all} } = our @EXPORT_OK = map { @{ $EXPORT_TAGS{$_} } } keys %EXPORT_TAGS;
+    #
+    sub MODIFY_CODE_ATTRIBUTES ( $package, $code, @attributes ) {
+        my ( $library, $library_version, $signature, $symbol, $full_name );
+        for my $attribute (@attributes) {
+            if ( $attribute =~ m[^Native\s*\(\s*(.+)\s*\)\s*$] ) {
+                ( $library, $library_version ) = Text::ParseWords::parse_line( '\s*,\s*', 1, $1 );
+                $library_version //= 0;
+            }
+            elsif ( $attribute =~ m[^Signature\s*\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {
+                $signature = $2;
+            }
+            elsif ( $attribute =~ m[^Symbol\s*\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {
+                $symbol = $2;
+            }
+            else { return $attribute }
+        }
+        $full_name = subname $code;
+        if ( !grep { !defined } $library, $library_version, $signature, $full_name ) {
+            if ( !defined $symbol ) {
+                $full_name =~ m[::(.*?)$];
+                $symbol = $1;
+            }
+
+            #use Data::Dump;
+            #ddx [ $package, $library, $library_version, $signature, $symbol, $full_name ];
+            __install_sub( $package, $library, $library_version, $signature, $symbol, $full_name );
+        }
+        return;
+    }
+
+    sub guess_library_name ( $lib = undef, $version = undef ) {
+        $lib // return;
+        CORE::state %_lib_cache;
+        if ( !defined $_lib_cache{ $lib . chr(0) . ( $version // '' ) } ) {
+
+            #ddx \@_;
+            if ( $^O eq 'MSWin32' ) {
+
+                # .dll and no version info
+            }
+            elsif ( $^O eq 'darwin' ) {
+
+                # TODO: might be .dynlib or .bundle
+            }
+            else {
+                my ( $volume, $directories, $file ) = File::Spec->splitpath($lib);
+
+                #ddx [$volume, $directories, $file];
+                my $so = $Config{so};
+                $file = 'lib' . $file if $file !~ m[^lib.+$] && $file !~ m[\.${so}];
+
+                #ddx [$volume, $directories, $file];
+                $file = $file . '.' . $so if $file !~ m[\.$so(\.[\d\.])?$];
+                $file .= '.' . $1 if defined $version &&
+
+                    #!defined $Config{ignore_versioned_solibs} &&
+                    version->parse($version)->stringify =~ m[^v?(.+)$] && $1 > 0;
+                $lib = File::Spec->catpath( $volume, $directories, $file );
+
+                #ddx [$volume, $directories, $file];
+            }
+
+            #use Data::Dump;
+            #warn $ENV{LD_LIBRARY_PATH};
+            $_lib_cache{ $lib . chr(0) . ( $version // '' ) } = $lib;
+        }
+        $_lib_cache{ $lib . chr(0) . ( $version // '' ) };
+    }
 };
 1;
 __END__
@@ -31,9 +103,11 @@ Dyn - dyncall Backed FFI
 
 =head1 SYNOPSIS
 
-    use Dyn qw[:sugar];	# Exports nothing by default
-    sub pow : Dyn( '/usr/lib/libm-2.33.so', '(dd)d');
-    print pow( 2, 10 );	# 1024
+    use Dyn qw[:sugar];
+    sub pow
+        : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : $^O eq 'darwin' ? 'libm.dylib' : 'libm', v6 )
+        : Signature( '(dd)d' );
+    print pow( 2, 10 );    # 1024
 
 =head1 DESCRIPTION
 
@@ -69,28 +143,28 @@ Honestly, you should be using one of the above packages rather than this one as
 they provide clean wrappers of dyncall's C functions. This package contains the
 sugary API.
 
-=head1 Functions
+=head1 C<:Native> CODE attribute
 
 While most of the upstream API is covered in the L<Dyn::Call>,
 L<Dyn::Callback>, and L<Dyn::Load> packages, all the sugar is right here in
 C<Dyn>. The most simple use of C<Dyn> would look something like this:
 
-	use Dyn ':sugar';
-	sub some_argless_function() : Dyn('somelib.so', '()v');
-	some_argless_function();
+    use Dyn ':sugar';
+    sub some_argless_function() : Native('somelib.so') : Signature('()v');
+    some_argless_function();
 
 Be aware that this will look a lot more like L<NativeCall from
 Raku|https://docs.raku.org/language/nativecall> before v1.0!
 
 The second line above looks like a normal Perl sub declaration but includes the
-C<:Dyn> attribute to specify that the sub is actually defined in a native
+C<:Native> attribute to specify that the sub is actually defined in a native
 library.
 
 To avoid banging your head on a built-in function, you may name your sub
 anything else and let Dyn know what symbol to attach:
 
-	sub my_abs : Dyn('my_lib.dll', '(d)d', 'abs');
-	CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
+    sub my_abs : Native('my_lib.dll') : Signature('(d)d') : Symbol('abs');
+    CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
 
 This is by far the fastest way to work with this distribution but it's not by
 any means the only way.
@@ -99,12 +173,16 @@ All of the following methods may be imported by name or with the C<:sugar> tag.
 
 Note that everything here is subject to change before v1.0.
 
+=head1 Functions
+
+The less
+
 =head2 C<wrap( ... )>
 
 Creates a wrapper around a given symbol in a given library.
 
-	my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
-	warn $pow->(5, 10); # 5**10
+    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+    warn $pow->(5, 10); # 5**10
 
 Expected parameters include:
 
@@ -119,6 +197,12 @@ Expected parameters include:
 =back
 
 Returns a code reference.
+
+=head2 C<attach( ... )>
+
+Wraps a given symbol in a named perl sub.
+
+    Dyn::attach('C:\Windows\System32\user32.dll', 'pow', '(dd)d' );
 
 =head1 Signatures
 

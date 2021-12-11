@@ -26,6 +26,8 @@ typedef struct Call {
 
 typedef struct Delayed {
     const char * library;
+    const char * library_version;
+    const char * package;
     const char * symbol;
     const char * signature;
     const char * name;
@@ -45,15 +47,15 @@ char * clean(char *str) {
 }
 
 #define _call_ \
-    /*warn("items == %d", items);*/\
-    /*warn("[%d] %s", ix, name );*/ \
+    /*//warn("items == %d", items);*/\
+    /*//warn("[%d] %s", ix, name );*/ \
     if (call != NULL) { \
         dcReset(call->cvm);\
         const char * sig_ptr = call->sig;\
         int sig_len = call->sig_len;\
         char ch;\
         for (ch = *sig_ptr; pos < /*sig_len;*/ items; ch = *++sig_ptr) {\
-            /*warn("pos == %d", pos);*/\
+            /*//warn("pos == %d", pos);*/\
             switch(ch) {\
                 case DC_SIGCHAR_VOID:\
                     break;\
@@ -64,7 +66,7 @@ char * clean(char *str) {
                 case DC_SIGCHAR_CHAR:\
                     dcArgChar(call->cvm, (char) SvIV(ST(pos))); break;\
                 case DC_SIGCHAR_FLOAT:\
-                    /*warn(" float ==> %f", SvNV(ST(pos)));*/ \
+                    /*//warn(" float ==> %f", SvNV(ST(pos)));*/ \
                     dcArgFloat(call->cvm, (float) SvNV(ST(pos))); break;\
                 case DC_SIGCHAR_USHORT:\
                     dcArgShort(call->cvm, (unsigned short) SvUV(ST(pos))); break;\
@@ -95,7 +97,7 @@ char * clean(char *str) {
             }\
             ++pos;\
         }\
-        /*warn("ret == %c", call->ret);*/\
+        /*//warn("ret == %c", call->ret);*/\
         switch (call->ret) {\
             case DC_SIGCHAR_FLOAT:\
                 ST(0) = newSVnv(dcCallFloat(call->cvm, call->fptr)); XSRETURN(1); \
@@ -143,11 +145,11 @@ char * clean(char *str) {
                 /*croak("Help: %c", call->ret);*/\
                 break;\
         }\
-        /*warn("here at %s line %d", __FILE__, __LINE__);*/\
+        /*//warn("here at %s line %d", __FILE__, __LINE__);*/\
     }\
     else\
         croak("Function is not attached! This is a serious bug!");\
-    /*warn("here at %s line %d", __FILE__, __LINE__);*/\
+    /*//warn("here at %s line %d", __FILE__, __LINE__);*/\
 
 static Call *
 _load(pTHX_ DLLib * lib, const char * symbol, const char * sig) {
@@ -158,17 +160,21 @@ _load(pTHX_ DLLib * lib, const char * symbol, const char * sig) {
     Newx(RETVAL, 1, Call);
     RETVAL->lib = lib;
     RETVAL->cvm = dcNewCallVM(1024);
+    //warn("100");
     if(RETVAL->cvm == NULL)
         return NULL;
+    //warn("101");
     RETVAL->fptr = dlFindSymbol(RETVAL->lib, symbol );
     if (RETVAL->fptr == NULL) // TODO: throw warning
         return NULL;
-    Newxz( RETVAL->sig, strlen(sig), char); // Dumb
+    //warn("102");
+    Newxz( RETVAL->sig, strlen(sig), char ); // Dumb
     //RETVAL->sig = sig;
     RETVAL->sig_len = strlen(RETVAL->sig);
-    Newxz( RETVAL->perl_sig, strlen(sig), char); // Dumb
+    Newxz( RETVAL->perl_sig, strlen(sig), char ); // Dumb
     int i, sig_pos;
     sig_pos = 0;
+    //warn("103");
     for (i = 0; sig[i + 1] != '\0'; ++i ) {
         switch (sig[i]) {
             case DC_SIGCHAR_CC_PREFIX:
@@ -230,7 +236,8 @@ _load(pTHX_ DLLib * lib, const char * symbol, const char * sig) {
                 break;
         };
     }
-    //warn("Now: %s|%s|%c", RETVAL->perl_sig, RETVAL->sig, RETVAL->ret);
+    //warn("104");
+    ////warn("Now: %s|%s|%c", RETVAL->perl_sig, RETVAL->sig, RETVAL->ret);
     return RETVAL;
 }
 
@@ -267,7 +274,7 @@ CODE:
         lib = INT2PTR(DLLib *, tmp);
     }
     else
-        lib = dlLoadLibrary( (const char *)SvPV_nolen(ST(0)) );
+        lib = dlLoadLibrary( (const char *) SvPV_nolen(ST(0)) );
 
     Call * call = _load(aTHX_ lib, func_name, sig);
     CV * cv;
@@ -287,7 +294,7 @@ PREINIT:
     int pos;
 PPCODE:
     pos = 0;
-    //warn("call_attach( ... )");
+    ////warn("call_attach( ... )");
     _call_
 
 SV *
@@ -304,7 +311,7 @@ CODE:
     else
         lib = dlLoadLibrary( (const char *)SvPV_nolen(ST(0)) );
 
-    //warn("ix == %d | items == %d", ix, items);
+    ////warn("ix == %d | items == %d", ix, items);
     if (func_name == NULL)
         func_name = symbol_name;
 
@@ -317,10 +324,10 @@ CODE:
     CV * cv;
     STMT_START {
         cv = newXSproto_portable(func_name, XS_Dyn_call_Dyn, (char*)__FILE__, call->perl_sig);
-        //warn("N");
+        ////warn("N");
         if (cv == NULL)
             croak("ARG! Something went really wrong while installing a new XSUB!");
-        //warn("Q");
+        ////warn("Q");
         XSANY.any_ptr = (void *) call;
     } STMT_END;
     RETVAL = newRV_inc((SV*) cv);
@@ -328,90 +335,38 @@ OUTPUT:
     RETVAL
 
 void
-MODIFY_CODE_ATTRIBUTES(char * name, void * code, ...)
+__install_sub( char * package, char * library, char * library_version, char * signature, char * symbol, char * full_name )
 PREINIT:
-    int i;
-    size_t attrlen;
-    dXSTARG;
-PPCODE:
-    //warn("Here: ix == %d", ix);
-    //warn ("GvENAME(CvGV(code)): %s", GvENAME(CvGV((SV *) code)));
-    char * full_name;
-    char * ename = GvENAME(CvGV((SV *) code));
-    Newxz( full_name, strlen(name) + strlen(ename) + 2 + 1, char);
-    strcpy(full_name, name);
-    strcat(full_name, "::");
-    strcat(full_name, ename);
-    //warn("%s", full_name);
-    
-    for (i = 2; i < items; ++i) {
-        //warn("A");
-        const char * attr = SvPV_const(ST(i), attrlen);
-        //warn ("A2: %s", attr);
-        //warn("B");
-    /*
-        AV *match_list;
-        I32 num_matches, j;
-
-        const char * m = "m[^(\\w+)\\s*?(.+?)$]";
-        warn("B2: %s", attr);
-
-        num_matches = matches(ST(i), m, &match_list);
-
-        warn (" ==> %d matches", num_matches);
-        for (j = 0; j < num_matches; j++)
-            warn(" => [%d] match: %s", j, SvPV_nolen(*av_fetch(match_list, j, FALSE)));
-    */
-        char * attr_name = strtok ((char *) attr, "(");
-        if (strcmp(attr_name, "Dyn") != 0) { // We only handle :Dyn
-            sv_setpv(ST(0), attr_name);
-            XSRETURN(1);
-        }
-
-        //warn("C");
-        char * library = strtok(NULL, ",");
-        //warn("Ca");
-        char * signature = clean(strtok(NULL, ", ")); // Might have a trailing ')' but who cares...
-        //warn("Cb");
-        char * symbol = strtok(NULL, ")");
-        //warn("D");
-        if (symbol == NULL)
-            symbol = GvENAME(CvGV(code));
-        else
-            symbol = clean(symbol);
-        //warn("E");
-        // named subroutine
-        
-        Delayed * _now;
-        Newx(_now, 1, Delayed);
-
-        Newx(_now->library, strlen(library) +1, char);
-        memcpy((void *) _now->library, library, strlen(library)+1);
-
-        Newx(_now->signature, strlen(signature)+1, char);
-        memcpy((void *) _now->signature, signature, strlen(signature)+1);
-
-        Newx(_now->symbol, strlen(symbol) +1, char);
-        memcpy((void *) _now->symbol, symbol, strlen(symbol)+1);
-
-        Newx(_now->name, strlen(full_name)+1, char);
-        memcpy((void *) _now->name, full_name, strlen(full_name)+1);
-
-        _now->next = delayed;
-        delayed = _now;
-    }
-    Safefree(full_name);
+    Delayed * _now;
+    Newx(_now, 1, Delayed);
+CODE:
+    Newx(_now->package, strlen(package) +1, char);
+    memcpy((void *) _now->package, package, strlen(package)+1);
+    Newx(_now->library, strlen(library) +1, char);
+    memcpy((void *) _now->library, library, strlen(library)+1);
+    Newx(_now->library_version, strlen(library_version) +1, char);
+    memcpy((void *) _now->library_version, library_version, strlen(library_version)+1);
+    Newx(_now->signature, strlen(signature)+1, char);
+    memcpy((void *) _now->signature, signature, strlen(signature)+1);
+    Newx(_now->symbol, strlen(symbol) +1, char);
+    memcpy((void *) _now->symbol, symbol, strlen(symbol)+1);
+    Newx(_now->name, strlen(full_name)+1, char);
+    memcpy((void *) _now->name, full_name, strlen(full_name)+1);
+    _now->next = delayed;
+    delayed = _now;
 
 void
-END( ... )    
+END( ... )
 PPCODE:
     Delayed * holding;
     while (delayed != NULL) {
         //warn ("killing %s...", delayed->name);
+        Safefree(delayed->package);
         Safefree(delayed->library);
+        Safefree(delayed->library_version);
         Safefree(delayed->signature);
         Safefree(delayed->symbol);
-        Safefree(delayed->name); 
+        Safefree(delayed->name);
         holding = delayed->next;
         Safefree(delayed);
         delayed = holding;
@@ -421,7 +376,7 @@ void
 AUTOLOAD( ... )
 PPCODE:
     char* autoload = SvPV_nolen( sv_mortalcopy( get_sv( "Dyn::AUTOLOAD", TRUE ) ) );
-    //warn("$AUTOLOAD? %s", autoload);
+    ////warn("$AUTOLOAD? %s", autoload);
     {   Delayed * _prev = delayed;
         Delayed * _now  = delayed;
         while (_now != NULL) {
@@ -430,10 +385,16 @@ PPCODE:
                 //warn(" name:      %s", _now->name);
                 //warn(" symbol:    %s", _now->symbol);
                 //warn(" library:   %s", _now->library);
+                //if (_now->library_version != NULL)
+                //    warn (" version:  %s", _now->library_version);
+                //warn(" package:   %s", _now->package);
                 SV * lib;
                 //if (strstr(_now->library, "{")) {
                     char eval[1024]; // idk
-                    sprintf(eval, "sub{sub{%s}}->()->()", _now->library); // context magic
+                    sprintf(eval, "package %s{sub{sub{Dyn::guess_library_name(%s,%s)}}->()->();};",
+                        _now->package, _now->library,
+                        _now->library_version
+                    );
                     //warn("eval: %s", eval);
                     lib = eval_pv( eval, FALSE ); // TODO: Cache this?
                 //}
@@ -442,37 +403,42 @@ PPCODE:
                 //SV * lib = get_sv(_now->library, TRUE);
                 //warn("     => %s", (const char *) SvPV_nolen(lib));
                 char *sig, ret, met;
-                DLLib * _lib = dlLoadLibrary(SvPV_nolen(lib));
-                Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature);
-               // warn("Z");
+
+                DLLib * _lib = dlLoadLibrary((const char *) SvPV_nolen(lib));
+                if (_lib == NULL)
+                    croak("Failed to load %s", SvPV_nolen(lib));
+                Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature );
+
+                //warn("Z");
                 if (call != NULL) {
                     CV * cv;
                     //warn("Y");
                     STMT_START {
-                       // warn("M");
+                       // //warn("M");
                         cv = newXSproto_portable(autoload, XS_Dyn_call_Dyn, (char*)__FILE__, call->perl_sig);
-                        //warn("N");
+                        ////warn("N");
                         if (cv == NULL)
                             croak("ARG! Something went really wrong while installing a new XSUB!");
-                        //warn("Q");
+                        ////warn("Q");
                         XSANY.any_ptr = (void *) call;
-                        //warn("O");
+                        ////warn("O");
                     } STMT_END;
-                    //warn("P");
+                    ////warn("P");
                     int pos = 0;
-                    //warn("AUTOLOAD( ... )");
+                    ////warn("AUTOLOAD( ... )");
                     _call_
                     _prev->next = _now->next;
-                    
+
                     Safefree(_now->library);
+                    Safefree(_now->package);
                     Safefree(_now->signature);
                     Safefree(_now->symbol);
-                    Safefree(_now->name); 
+                    Safefree(_now->name);
                     Safefree(_now);
                 }
                 else
                     croak("Oops!");
-                //warn("A");
+                ////warn("A");
                 //if (_prev = NULL)
                 //    _prev = _now;
                 return;

@@ -5,9 +5,11 @@ Dyn - dyncall Backed FFI
 
 # SYNOPSIS
 
-    use Dyn qw[:sugar]; # Exports nothing by default
-    sub pow : Dyn( '/usr/lib/libm-2.33.so', '(dd)d');
-    print pow( 2, 10 ); # 1024
+    use Dyn qw[:sugar];
+    sub pow
+        : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : $^O eq 'darwin' ? 'libm.dylib' : 'libm', v6 )
+        : Signature( '(dd)d' );
+    print pow( 2, 10 );    # 1024
 
 # DESCRIPTION
 
@@ -39,28 +41,28 @@ Honestly, you should be using one of the above packages rather than this one as
 they provide clean wrappers of dyncall's C functions. This package contains the
 sugary API.
 
-# Functions
+# `:Native` CODE attribute
 
 While most of the upstream API is covered in the [Dyn::Call](https://metacpan.org/pod/Dyn%3A%3ACall),
 [Dyn::Callback](https://metacpan.org/pod/Dyn%3A%3ACallback), and [Dyn::Load](https://metacpan.org/pod/Dyn%3A%3ALoad) packages, all the sugar is right here in
 `Dyn`. The most simple use of `Dyn` would look something like this:
 
-        use Dyn ':sugar';
-        sub some_argless_function() : Dyn('somelib.so', '()v');
-        some_argless_function();
+    use Dyn ':sugar';
+    sub some_argless_function() : Native('somelib.so') : Signature('()v');
+    some_argless_function();
 
 Be aware that this will look a lot more like [NativeCall from
 Raku](https://docs.raku.org/language/nativecall) before v1.0!
 
 The second line above looks like a normal Perl sub declaration but includes the
-`:Dyn` attribute to specify that the sub is actually defined in a native
+`:Native` attribute to specify that the sub is actually defined in a native
 library.
 
 To avoid banging your head on a built-in function, you may name your sub
 anything else and let Dyn know what symbol to attach:
 
-        sub my_abs : Dyn('my_lib.dll', '(d)d', 'abs');
-        CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
+    sub my_abs : Native('my_lib.dll') : Signature('(d)d') : Symbol('abs');
+    CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
 
 This is by far the fastest way to work with this distribution but it's not by
 any means the only way.
@@ -69,12 +71,16 @@ All of the following methods may be imported by name or with the `:sugar` tag.
 
 Note that everything here is subject to change before v1.0.
 
+# Functions
+
+The less
+
 ## `wrap( ... )`
 
 Creates a wrapper around a given symbol in a given library.
 
-        my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
-        warn $pow->(5, 10); # 5**10
+    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', 'dd)d' );
+    warn $pow->(5, 10); # 5**10
 
 Expected parameters include:
 
@@ -83,6 +89,12 @@ Expected parameters include:
 - `signature` - signature defining argument types, return type, and optionally the calling convention used
 
 Returns a code reference.
+
+## `attach( ... )`
+
+Wraps a given symbol in a named perl sub.
+
+    Dyn::attach('C:\Windows\System32\user32.dll', 'pow', '(dd)d' );
 
 # Signatures
 
