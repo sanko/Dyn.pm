@@ -107,13 +107,13 @@ char * clean(char *str) {
                 ST(0) = sv_2mortal(newSVnv(dcCallDouble(call->cvm, call->fptr))); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_BOOL:\
-                ST(0) = newSViv(dcCallBool(call->cvm, call->fptr)); XSRETURN(1); \
+                ST(0) = boolSV(dcCallBool(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_CHAR:\
-                ST(0) = newSVnv(dcCallChar(call->cvm, call->fptr)); XSRETURN(1); \
+                ST(0) = newSVnv((char) dcCallChar(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_SHORT:\
-                ST(0) = newSViv(dcCallShort(call->cvm, call->fptr)); XSRETURN(1); \
+                ST(0) = newSViv((short) dcCallShort(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_INT:\
                 ST(0) = newSViv(dcCallInt(call->cvm, call->fptr)); XSRETURN(1); \
@@ -129,11 +129,15 @@ char * clean(char *str) {
                 sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; XSRETURN(1);\
                 break;\
             case DC_SIGCHAR_UCHAR:\
+                ST(0) = newSVuv((u_char) dcCallChar(call->cvm, call->fptr)); XSRETURN(1); break; \
             case DC_SIGCHAR_USHORT:\
+                ST(0) = newSVuv((u_short) dcCallShort(call->cvm, call->fptr)); XSRETURN(1); break; \
             case DC_SIGCHAR_UINT:\
+                ST(0) = newSVuv((u_int) dcCallInt(call->cvm, call->fptr)); XSRETURN(1); break; \
             case DC_SIGCHAR_ULONG:\
+                ST(0) = newSVuv((u_long) dcCallLong(call->cvm, call->fptr)); XSRETURN(1); break; \
             case DC_SIGCHAR_ULONGLONG:\
-                ST(0) = newSVuv(dcCallLongLong(call->cvm, call->fptr)); XSRETURN(1); \
+                ST(0) = newSVuv( dcCallLongLong(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_STRING:\
                 sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; XSRETURN(1);\
@@ -411,7 +415,7 @@ PPCODE:
 #if defined(_WIN32) || defined(__WIN32__)
 				unsigned int err = GetLastError();
 				warn ("GetLastError() == %d", err);
-#endif					
+#endif
                     croak("Failed to load %s", lib_name);
 				}
                 Call * call = _load(aTHX_ _lib, _now->symbol, _now->signature );

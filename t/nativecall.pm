@@ -4,7 +4,7 @@ package t::nativecall {
     use Test::More;
     use experimental 'signatures';
     use Exporter 'import';
-    our @EXPORT = qw[compile_test_lib compile_cpp_test_lib];
+    our @EXPORT = qw[compile_test_lib compile_cpp_test_lib is_approx];
     use Config;
     #
     my $OS = $^O;
@@ -76,6 +76,10 @@ package t::nativecall {
 
     END {
         unlink $_ for @cleanup;
+    }
+
+    sub is_approx ( $actual, $expected, $desc ) {    # https://docs.raku.org/routine/is-approx
+        ok abs( $actual - $expected ) < 1e-6, $desc;
     }
 };
 1;
