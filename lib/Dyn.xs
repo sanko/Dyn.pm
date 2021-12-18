@@ -81,8 +81,13 @@ char * clean(char *str) {
                     dcArgLong(call->cvm, (unsigned long) SvNV(ST(pos))); break;\
                 case DC_SIGCHAR_LONG:\
                     dcArgLong(call->cvm, (long) SvNV(ST(pos))); break;\
-                /*case DC_SIGCHAR_POINTER:\
-                //  dcArgPointer(call->cvm, SvIV(ST(pos))); break;*/\
+                case DC_SIGCHAR_POINTER:\
+                    warn("passing pointer..."); \
+                    {IV tmp = SvIV( (SV*) SvRV( ST(pos) ) ); \
+                    int * arg = INT2PTR(int *, tmp); \
+                    dcArgPointer(call->cvm, arg);\
+                    }\
+                    break;\
                 case DC_SIGCHAR_ULONGLONG:\
                     dcArgLongLong(call->cvm, (unsigned long long) SvNV(ST(pos))); break;\
                 case DC_SIGCHAR_LONGLONG:\
@@ -90,7 +95,7 @@ char * clean(char *str) {
                 case DC_SIGCHAR_DOUBLE:\
                     dcArgDouble(call->cvm, (double) SvNV(ST(pos))); break;\
                 case DC_SIGCHAR_STRING:\
-                    dcArgPointer(call->cvm, SvPV_nolen(ST(pos))); break;\
+                    dcArgPointer(call->cvm, SvPVutf8_nolen(ST(pos))); break;\
                 case DC_SIGCHAR_STRUCT: /* XXX: dyncall structs aren't ready yet*/\
                     break;\
                 default:\
@@ -125,9 +130,17 @@ char * clean(char *str) {
                 ST(0) = newSViv(dcCallLongLong(call->cvm, call->fptr)); XSRETURN(1); \
                 break;\
             case DC_SIGCHAR_POINTER:\
-                /*ST(0) = newSViv(dcCallPointer(call->cvm, call->fptr)); XSRETURN(1);*/ \
-                sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; XSRETURN(1);\
-                break;\
+                /*{\
+                    void * RETVAL = dcCallPointer(call->cvm, call->fptr); \
+                    SV * RETVALSV;\
+                    RETVALSV = sv_newmortal();\
+                    sv_setref_pv(RETVALSV, "Dyn::pointer",\
+                    (void*) RETVAL);\
+                    ST(0) = RETVALSV;\
+                }*/\
+                /*ST(0) = newSVnv(PTR2NV(dcCallPointer(call->cvm, call->fptr)));*/ \
+                sv_setpv(TARG, (const char *) dcCallPointer(call->cvm, call->fptr)); XSprePUSH; PUSHTARG; \
+                XSRETURN(1); break; \
             case DC_SIGCHAR_UCHAR:\
                 ST(0) = newSVuv((u_char) dcCallChar(call->cvm, call->fptr)); XSRETURN(1); break; \
             case DC_SIGCHAR_USHORT:\

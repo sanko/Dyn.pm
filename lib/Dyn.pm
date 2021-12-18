@@ -25,6 +25,26 @@ package Dyn 0.03 {
         sugar => [qw[wrap MODIFY_SCALAR_ATTRIBUTES MODIFY_CODE_ATTRIBUTES AUTOLOAD]]
     );
     @{ $EXPORT_TAGS{all} } = our @EXPORT_OK = map { @{ $EXPORT_TAGS{$_} } } keys %EXPORT_TAGS;
+    {
+        # Types hack
+        sub Bool()       {'b'}
+        sub Char()       {'c'}                             # Int8
+        sub UChar()      {'C'}                             # UInt8
+        sub Short()      {'s'}                             # Int16
+        sub UShort ()    {'S'}                             # UInt16
+        sub Int()        {'i'}
+        sub UInt()       {'I'}
+        sub Long ()      {'j'}                             # Int32
+        sub ULong ()     {'J'}                             # UInt32
+        sub LongLong ()  {'l'}                             # Int64
+        sub ULongLong () {'L'}                             # UInt64
+        sub Float ()     {'f'}                             # Float32
+        sub Double()     {'d'}                             # Float64
+        sub Pointer    ($type) { warn $type; ...; 'p' }    # Void*
+        sub InstanceOf ($type) { warn $type; ...; 'T' }    # Struct
+        sub Void()   {'v'}
+        sub String() {'Z'}
+    }
     #
     sub MODIFY_CODE_ATTRIBUTES ( $package, $code, @attributes ) {
 
@@ -35,11 +55,26 @@ package Dyn 0.03 {
                 ( $library, $library_version ) = Text::ParseWords::parse_line( '\s*,\s*', 1, $1 );
                 $library_version //= 0;
             }
-            elsif ( $attribute =~ m[^Signature\s*?\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {
-                $signature = $2;
-            }
             elsif ( $attribute =~ m[^Symbol\s*\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {
                 $symbol = $2;
+            }
+            elsif ( $attribute =~ m[^Signature\s*?\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {    # direct
+                $signature = $2;
+            }
+            elsif ( $attribute =~ m[^Signature\s*?\(\s*(.+?)?(?:\s*=>\s*(\w+)?)?\s*\)$] ) { # pretty
+                my $args = $1;
+                my $ret  = $2;
+
+                #my ($ret, $args) = $1 =~ m[^(\w+)(?:\s*=>\s*(.+))?$];
+                $ret //= 'Void';
+
+                #warn $args;
+                #warn $ret;
+                $signature = sprintf '(%s)%s', join( '', eval($args) ), eval($ret);
+
+                #warn $signature;
+                #ddx eval $out;
+                #$signature = $2;
             }
             else { return $attribute }
         }
@@ -237,9 +272,10 @@ Dyn - dyncall Backed FFI
 =head1 SYNOPSIS
 
     use Dyn qw[:sugar];
-    sub pow
-        : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : 'libm', v6 )
-        : Signature( '(dd)d' );
+	sub pow
+		: Native( $^O eq 'MSWin32' ? 'ntdll.dll' : ('libm', v6) )
+		: Signature(Double, Double => Double);
+
     print pow( 2, 10 );    # 1024
 
 =head1 DESCRIPTION

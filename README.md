@@ -6,9 +6,10 @@ Dyn - dyncall Backed FFI
 # SYNOPSIS
 
     use Dyn qw[:sugar];
-    sub pow
-        : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : 'libm', v6 )
-        : Signature( '(dd)d' );
+        sub pow
+                : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : ('libm', v6) )
+                : Signature(Double, Double => Double);
+
     print pow( 2, 10 );    # 1024
 
 # DESCRIPTION
