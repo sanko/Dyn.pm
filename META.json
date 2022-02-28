@@ -4,7 +4,7 @@
       "Sanko Robinson <sanko@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.1.12, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Minilla/v3.1.15, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "artistic_2"
    ],
@@ -95,12 +95,12 @@
       "homepage" : "https://github.com/sanko/Dyn.pm",
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/sanko/Dyn.pm.git",
+         "url" : "https://github.com/sanko/Dyn.pm.git",
          "web" : "https://github.com/sanko/Dyn.pm"
       }
    },
    "version" : "0.03",
    "x_authority" : "cpan:SANKO",
-   "x_serialization_backend" : "JSON::PP version 4.06",
+   "x_serialization_backend" : "JSON::PP version 4.07",
    "x_static_install" : 0
 }

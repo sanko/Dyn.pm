@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/linux.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/windows.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/osx.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/freebsd.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Dyn.svg)](https://metacpan.org/release/Dyn)
+[![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/linux.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions/workflows/linux.yaml) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/windows.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions/workflows/windows.yaml) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/osx.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions/workflows/osx.yaml) [![Actions Status](https://github.com/sanko/Dyn.pm/actions/workflows/freebsd.yaml/badge.svg)](https://github.com/sanko/Dyn.pm/actions/workflows/freebsd.yaml) [![MetaCPAN Release](https://badge.fury.io/pl/Dyn.svg)](https://metacpan.org/release/Dyn)
 # NAME
 
 Dyn - dyncall Backed FFI
@@ -6,9 +6,9 @@ Dyn - dyncall Backed FFI
 # SYNOPSIS
 
     use Dyn qw[:sugar];
-        sub pow
-                : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : ('libm', v6) )
-                : Signature(Double, Double => Double);
+    sub pow
+        : Native( $^O eq 'MSWin32' ? 'ntdll.dll' : ('libm', v6) )
+        : Signature(Double, Double => Double);
 
     print pow( 2, 10 );    # 1024
 

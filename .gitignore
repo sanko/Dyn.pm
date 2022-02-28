@@ -47,3 +47,4 @@ eg/libtest.so
 eg/sin.pl
 lib/Dyn/Sugar.pm
 object_pad.h
+eg/_Inline/
