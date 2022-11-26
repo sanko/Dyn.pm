@@ -44,6 +44,10 @@ tests:
 buildsys:
   o ./configure output for sun make builds: set correct C++ compiler flag var
   o ./configure for SunOS now uses isainfo(1) to deduce native instruction set
+  o added explicit arm64 target, and clang tool options to Windows' configure.bat
+  o configure.{bat,rc} now writing Makefile.config, for consistency/compatibility (e.g. configure.bat
+    can now be used to set up env flags for a non-nmake toolchain)
+  o simplified/decluttered Windows and Plan9 configure scripts (removal of unused/stale options, ...)
 doc:
   o callconv section additions about aggregate-by-value passing for all platforms
   o new Linux-Std-Base-specific PPC32/SysV section, as aggregate retval handling differs from

@@ -47,7 +47,7 @@ DCpointer  API fun_##NAME##_p(DCpointer  x) { return x; }
 
 /* __cdecl */
 
-#if !defined(DC__OS_Win32)
+#if !defined(DC__C_MSVC) && !defined(__cdecl)
 #  define __cdecl
 #endif
 
