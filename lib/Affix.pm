@@ -369,7 +369,9 @@ Affix - A Foreign Function Interface eXtension
 =head1 DESCRIPTION
 
 Affix is a wrapper around L<dyncall|https://dyncall.org/>. If you're looking to
-design your own low level wrapper, see L<Dyn.pm|Dyn>.
+design your own low level FFI, see L<Dyn.pm|Dyn>.
+
+But if you're just looking for a fast FFI system, keep reading.
 
 =head1 C<:Native> CODE attribute
 

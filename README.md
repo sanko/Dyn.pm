@@ -18,7 +18,9 @@ Affix - A Foreign Function Interface eXtension
 # DESCRIPTION
 
 Affix is a wrapper around [dyncall](https://dyncall.org/). If you're looking to
-design your own low level wrapper, see [Dyn.pm](https://metacpan.org/pod/Dyn).
+design your own low level FFI, see [Dyn.pm](https://metacpan.org/pod/Dyn).
+
+But if you're just looking for a fast FFI system, keep reading.
 
 # `:Native` CODE attribute
 

@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 use lib '../lib', '../blib/arch', '../blib/lib';
-use Dyn qw[:sugar];
+use Affix;
 $|++;
 #
-sub GetSystemMetrics : Native('C:\Windows\System32\user32.dll') : Signature('(i)i');
+sub GetSystemMetrics : Native('C:\Windows\System32\user32.dll') : Signature([Int]=>Int);
 #
 CORE::say 'width = ' . GetSystemMetrics(0);
 CORE::say 'height = ' . GetSystemMetrics(1);
