@@ -570,10 +570,11 @@ XS_INTERNAL(Affix_call) {
              call->sig[i], __FILE__, __LINE__);*/
         value = ST(i);
         type = *av_fetch(call->args, i, 0); // Make broad assexumptions
-        {
+        /*{
             char *tmp = SvPV_nolen(type);
             _type = tmp[0];
-        }
+        }*/
+        _type = call->sig[i];
         switch (_type) {
         case DC_SIGCHAR_VOID:
             break;
