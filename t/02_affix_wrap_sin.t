@@ -40,7 +40,7 @@ SKIP: {
         -0.988031624092862;    # The real value of sin(30);
     for my $fptr ( sort keys %loaders ) {
         if ( !defined $loaders{$fptr} ) {
-            diag 'Failed to attach ' . $fptr;
+            diag 'Failed to affix ' . $fptr;
         }
         else {
             is $loaders{$fptr}->(30), $correct, sprintf '$loaders{%s}->( 30 );', $fptr;

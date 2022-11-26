@@ -12,7 +12,7 @@ Affix - A Foreign Function Interface eXtension
         $^O eq 'bsd'          ? '/usr/lib/libm.so' :
         -e '/lib64/libm.so.6' ? '/lib64/libm.so.6' :
         '/lib/x86_64-linux-gnu/libm.so.6';
-    attach( $lib, 'pow', [ Double, Double ] => Double );
+    affix( $lib, 'pow', [ Double, Double ] => Double );
     print pow( 2, 10 );    # 1024
 
 # DESCRIPTION
@@ -54,7 +54,7 @@ through and any result is returned according to the given type. Here, we return
 nothing because our signature claims the function returns `Void`.
 
 To avoid banging your head on a built-in function, you may name your sub
-anything else and let Affix know what symbol to attach:
+anything else and let Affix know what symbol to affix:
 
     sub my_abs : Native('my_lib.dll') : Signature([Double] => Double) : Symbol('abs');
     CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
@@ -66,11 +66,11 @@ All of the following methods may be imported by name or with the `:sugar` tag.
 
 Note that everything here is subject to change before v1.0.
 
-# `attach( ... )`
+# `affix( ... )`
 
 Wraps a given symbol in a named perl sub.
 
-    Dyn::attach('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
 
 # `wrap( ... )`
 
@@ -95,7 +95,7 @@ simple and powerful but Affix is inspired by [Type::Standard](https://metacpan.o
 
 # Library paths and names
 
-The `Native` attribute, `attach( ... )`, and `wrap( ... )` all accept the
+The `Native` attribute, `affix( ... )`, and `wrap( ... )` all accept the
 library name, the full path, or a subroutine returning either of the two. When
 using the library name, the name is assumed to be prepended with lib and
 appended with `.so` (or just appended with `.dll` on Windows), and will be

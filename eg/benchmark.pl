@@ -228,13 +228,13 @@ my $sin_stdcall  = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_STDC
 my $sin_fastcall = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_FASTCALL_GNU );
 my $sin_thiscall = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_THISCALL_GNU );
 #
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_DEFAULT, '_attach_sin_default' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS_VARARGS, '_attach_sin_var' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS,     '_attach_sin_ellipse' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_CDECL,        '_attach_sin_cdecl' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_STDCALL,      '_attach_sin_std' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_FASTCALL_GNU, '_attach_sin_fc' );
-attach( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_THISCALL_GNU, '_attach_sin_tc' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_DEFAULT,          '_affix_sin_default' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS_VARARGS, '_affix_sin_var' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS,         '_affix_sin_ellipse' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_CDECL,            '_affix_sin_cdecl' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_STDCALL,          '_affix_sin_std' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_FASTCALL_GNU,     '_affix_sin_fc' );
+affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_THISCALL_GNU,     '_affix_sin_tc' );
 #
 my $ffi = FFI::Platypus->new( api => 1 );
 $ffi->lib($libfile);
@@ -258,13 +258,13 @@ my $sin = sin 500;
     die 'oops' if $sin_stdcall->(500) != $sin;
     die 'oops' if $sin_fastcall->(500) != $sin;
     die 'oops' if $sin_thiscall->(500) != $sin;
-    die 'oops' if _attach_sin_default(500) != $sin;
-    die 'oops' if _attach_sin_var(500) != $sin;
-    die 'oops' if _attach_sin_ellipse(500) != $sin;
-    die 'oops' if _attach_sin_cdecl(500) != $sin;
-    die 'oops' if _attach_sin_std(500) != $sin;
-    die 'oops' if _attach_sin_fc(500) != $sin;
-    die 'oops' if _attach_sin_tc(500) != $sin;
+    die 'oops' if _affix_sin_default(500) != $sin;
+    die 'oops' if _affix_sin_var(500) != $sin;
+    die 'oops' if _affix_sin_ellipse(500) != $sin;
+    die 'oops' if _affix_sin_cdecl(500) != $sin;
+    die 'oops' if _affix_sin_std(500) != $sin;
+    die 'oops' if _affix_sin_fc(500) != $sin;
+    die 'oops' if _affix_sin_tc(500) != $sin;
     die 'oops' if ffi_sin(500) != $sin;
     die 'oops' if $ffi_func->(500) != $sin;
     die 'oops' if $ffi_func->call(500) != $sin;
@@ -282,33 +282,33 @@ cmpthese(
                 my $x = 0;
                 while ( $x < $depth ) { my $n = sin($x); $x++ }
             },
-            attach_sin_default => sub {
+            affix_sin_default => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_default($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_default($x); $x++ }
             },
-            attach_sin_var => sub {
+            affix_sin_var => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_var($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_var($x); $x++ }
             },
-            attach_sin_ellipse => sub {
+            affix_sin_ellipse => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_ellipse($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_ellipse($x); $x++ }
             },
-            attach_sin_cdecl => sub {
+            affix_sin_cdecl => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_cdecl($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_cdecl($x); $x++ }
             },
-            attach_sin_std => sub {
+            affix_sin_std => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_std($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_std($x); $x++ }
             },
-            attach_sin_fc => sub {
+            affix_sin_fc => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_fc($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_fc($x); $x++ }
             },
-            attach_sin_tc => sub {
+            affix_sin_tc => sub {
                 my $x = 0;
-                while ( $x < $depth ) { my $n = _attach_sin_tc($x); $x++ }
+                while ( $x < $depth ) { my $n = _affix_sin_tc($x); $x++ }
             },
             sub_sin_default => sub {
                 my $x = 0;

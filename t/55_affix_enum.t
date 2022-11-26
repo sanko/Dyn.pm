@@ -83,8 +83,8 @@ subtest 'typedef' => sub {
         is int TV::FOX(),        11,      'typedef Enum results in dualvars [FOX numeric]';
         is TV::MSNBC(),          'MSNBC', 'typedef Enum results in dualvars [MSNBC string]';
         is int TV::MSNBC(),      77,      'typedef Enum results in dualvars [MSNBC numeric]';
-        is TakeEnum(11),         -11,     'FOX used in attached function';
-        is TakeEnum(15),         -1,      'ESPN used in attached function';
+        is TakeEnum(11),         -11,     'FOX used in affixed function';
+        is TakeEnum(15),         -1,      'ESPN used in affixed function';
         is $cv->( TV::FOX() ),   -11,     'TV::FOX() used in wrapped function';
         is $cv->( TV::CNN() ),   -1,      'TV::CNN() used in wrapped function';
         is $cv->( TV::MSNBC() ), -1,      'TV::MSNBC() used in wrapped function';

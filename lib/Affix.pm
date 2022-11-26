@@ -57,7 +57,7 @@ package Affix 0.04 {    # 'FFI' is my middle name!
 
             #ddx [ $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6], $_delay{$sub}[7] ];
             my $cv
-                = attach( $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6], $_delay{$sub}[7] );
+                = affix( $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6], $_delay{$sub}[7] );
             delete $_delay{$sub};
             return &$cv;
         }
@@ -135,7 +135,7 @@ package Affix 0.04 {    # 'FFI' is my middle name!
 
                 # TODO: call this defined sub and pass the wrapped symbol and then the passed args
                 ...;
-                return attach( locate_lib( $library, $library_version ),
+                return affix( locate_lib( $library, $library_version ),
                     $symbol, $signature, $return, $mode, $full_name );
             }
             $_delay{$full_name} = [
@@ -363,7 +363,7 @@ Affix - A Foreign Function Interface eXtension
         $^O eq 'bsd'          ? '/usr/lib/libm.so' :
         -e '/lib64/libm.so.6' ? '/lib64/libm.so.6' :
         '/lib/x86_64-linux-gnu/libm.so.6';
-    attach( $lib, 'pow', [ Double, Double ] => Double );
+    affix( $lib, 'pow', [ Double, Double ] => Double );
     print pow( 2, 10 );    # 1024
 
 =head1 DESCRIPTION
@@ -409,7 +409,7 @@ through and any result is returned according to the given type. Here, we return
 nothing because our signature claims the function returns C<Void>.
 
 To avoid banging your head on a built-in function, you may name your sub
-anything else and let Affix know what symbol to attach:
+anything else and let Affix know what symbol to affix:
 
     sub my_abs : Native('my_lib.dll') : Signature([Double] => Double) : Symbol('abs');
     CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
@@ -421,11 +421,11 @@ All of the following methods may be imported by name or with the C<:sugar> tag.
 
 Note that everything here is subject to change before v1.0.
 
-=head1 C<attach( ... )>
+=head1 C<affix( ... )>
 
 Wraps a given symbol in a named perl sub.
 
-    Dyn::attach('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
 
 =head1 C<wrap( ... )>
 
@@ -456,7 +456,7 @@ L<Affix::Types> for more.
 
 =head1 Library paths and names
 
-The C<Native> attribute, C<attach( ... )>, and C<wrap( ... )> all accept the
+The C<Native> attribute, C<affix( ... )>, and C<wrap( ... )> all accept the
 library name, the full path, or a subroutine returning either of the two. When
 using the library name, the name is assumed to be prepended with lib and
 appended with C<.so> (or just appended with C<.dll> on Windows), and will be
@@ -888,6 +888,8 @@ C<Enum> but with signed chars.
 Check out L<FFI::Platypus> for a more robust and mature FFI.
 
 Examples found in C<eg/>.
+
+L<LibUI> for a larger demo project based on Affix
 
 =head1 LICENSE
 

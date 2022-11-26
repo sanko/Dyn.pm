@@ -1110,7 +1110,7 @@ BOOT:
     // Enum[]?
     export_function("Affix", "typedef", "types");
     export_function("Affix", "wrap", "default");
-    export_function("Affix", "attach", "default");
+    export_function("Affix", "affix", "default");
     export_function("Affix", "MODIFY_CODE_ATTRIBUTES", "sugar");
     export_function("Affix", "AUTOLOAD", "sugar");
     export_function("Affix", "MODIFY_CODE_ATTRIBUTES", "default");
@@ -1162,14 +1162,14 @@ OUTPUT:
     RETVAL
 
 SV *
-attach(lib, symbol, args, ret, mode = DC_SIGCHAR_CC_DEFAULT, func_name = (ix == 1) ? NULL : symbol)
+affix(lib, symbol, args, ret, mode = DC_SIGCHAR_CC_DEFAULT, func_name = (ix == 1) ? NULL : symbol)
     const char * symbol
     AV * args
     SV * ret
     char mode
     const char * func_name
 ALIAS:
-    attach = 0
+    affix = 0
     wrap   = 1
 PREINIT:
     dMY_CXT;
@@ -1271,7 +1271,7 @@ CODE:
         char *str = SvPVbytex_nolen(ret);
         call->ret = str[0];
     }
-    // if (call == NULL) croak("Failed to attach %s", symbol);
+    // if (call == NULL) croak("Failed to affix %s", symbol);
     /* Create a new XSUB instance at runtime and set it's XSANY.any_ptr to contain
      *the necessary user data. name can be NULL => fully anonymous sub!
      **/
