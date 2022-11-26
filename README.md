@@ -22,12 +22,46 @@ design your own low level FFI, see [Dyn.pm](https://metacpan.org/pod/Dyn).
 
 But if you're just looking for a fast FFI system, keep reading.
 
-# `:Native` CODE attribute
+Note: This is experimental software and is subject to change as long as this
+disclaimer is here.
 
-While most of the upstream API is covered in the [Dyn::Call](https://metacpan.org/pod/Dyn%3A%3ACall),
-[Dyn::Callback](https://metacpan.org/pod/Dyn%3A%3ACallback), and [Dyn::Load](https://metacpan.org/pod/Dyn%3A%3ALoad) packages, all the sugar is right here in
-`Affix`. The simplest but least flexible use of `Affix` would look something
-like this:
+# Basic Usage
+
+The basic API here is rather simple but not lacking in power.
+
+## `affix( ... )`
+
+Wraps a given symbol in a named perl sub.
+
+    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+
+## `wrap( ... )`
+
+Creates a wrapper around a given symbol in a given library.
+
+    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
+    warn $pow->(5, 10); # 5**10
+
+Expected parameters include:
+
+- `lib`
+
+    pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
+
+- `symbol_name`
+
+    the name of the symbol to call
+
+- `signature`
+
+    signature defining argument types, return type, and optionally the calling
+    convention used
+
+Returns a code reference.
+
+## `:Native` CODE attribute
+
+All the sugar is right here in the :Native code attribute.
 
     use Affix;
     sub some_iiZ_func : Native('somelib.so') : Signature([Int, Long, Str] => Void);
@@ -66,34 +100,25 @@ All of the following methods may be imported by name or with the `:sugar` tag.
 
 Note that everything here is subject to change before v1.0.
 
-# `affix( ... )`
-
-Wraps a given symbol in a named perl sub.
-
-    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
-
-# `wrap( ... )`
-
-Creates a wrapper around a given symbol in a given library.
-
-    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
-    warn $pow->(5, 10); # 5**10
-
-Expected parameters include:
-
-- `lib` - pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
-- `symbol_name` - the name of the symbol to call
-- `signature` - signature defining argument types, return type, and optionally the calling convention used
-
-Returns a code reference.
-
 # Signatures
 
-`dyncall` uses an almost `pack`-like syntax to define signatures which is
-simple and powerful but Affix is inspired by [Type::Standard](https://metacpan.org/pod/Type%3A%3AStandard). See
-[Affix::Types](https://metacpan.org/pod/Affix%3A%3ATypes) for more.
+Affix's advisory signatures are required to give us a little hint about what we
+should expect.
 
-# Library paths and names
+    [ Int, ArrayRef[ Int, 100 ], Str ] => Int
+
+Arguments are defined in a list: `[ Int, ArrayRef[ Char, 5 ], Str ]`
+
+The return value comes next: `Int`
+
+To call the function with such a signature, your Perl would look like this:
+
+    mh $int = func( 500, [ 'a', 'b', 'x', '4', 'H' ], 'Test');
+
+See the aptly named section entitled [Types](#types) for more on the possible
+types.
+
+# Library Paths and Names
 
 The `Native` attribute, `affix( ... )`, and `wrap( ... )` all accept the
 library name, the full path, or a subroutine returning either of the two. When
@@ -252,6 +277,34 @@ pointed to by `$dest`.
 
 Returns the size, in bytes, of the [type](#types) passed to it.
 
+# Utility Functions
+
+Here's some thin cushions for the rougher edges of wrapping libraries.
+
+They may be imported by name for now but might be renamed, removed, or changed
+in the future.
+
+## `ptr2sv( ... )`
+
+    my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+
+This function will parse a pointer into a Perl HashRef.
+
+## `sv2ptr( ... )`
+
+    my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
+
+This function will coerce a Perl HashRef into a pointer.
+
+## `DumpHex( ... )`
+
+    DumpHex( $ptr, $length );
+
+Dumps `$length` bytes of raw data from a given point in memory.
+
+This is a debugging function that probably shouldn't find its way into your
+code.
+
 # Types
 
 While Raku offers a set of native types with a fixed, and known, representation
@@ -366,21 +419,29 @@ type](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
 
 ### `SSize_t`
 
+Signed integer type.
+
 ### `Size_t`
+
+Unsigned integer type often expected as the result of `sizeof` or `offsetof`
+but can be found elsewhere.
 
 ## `Str`
 
 Automatically handle null terminated character pointers with this rather than
-trying to defined a parameterized `Pointer[...]` type like as `Pointer[Char]`
-and doing it yourself.
+trying using `Pointer[Char]` and doing it yourself.
 
-You'll learn a bit more about parameterized types in the next section.
+You'll learn a bit more about `Pointer[...]` and other parameterized types in
+the next section.
 
 # Parameterized Types
 
 Some types must be provided with more context data.
 
 ## `Pointer[ ... ]`
+
+    Pointer[Int]  ~~ int *
+    Pointer[Void] ~~ void *
 
 Create pointers to (almost) all other defined types including `Struct` and
 `Void`.
@@ -390,15 +451,21 @@ To handle a pointer to an object, see [InstanceOf](https://metacpan.org/pod/Inst
 Void pointers (`Pointer[Void]`) might be created with `malloc` and other
 memory related functions.
 
-## `Aggregate`
-
-This is currently undefined and reserved for possible future use.
-
 ## `Struct[ ... ]`
 
-A struct is a type consisting of a sequence of members whose storage is
-allocated in an ordered sequence (as opposed to `Union`, which is a type
-consisting of a sequence of members whose storage overlaps).
+    Struct[                    struct {
+        dob => Struct[              struct {
+            year  => Int,               int year;
+            month => Int,   ~~          int month;
+            day   => Int                int day;
+        ],                          } dob;
+        name => Str,                char *name;
+        wId  => Long                long wId;
+    ];                          };
+
+A struct consists of a sequence of members with storage allocated in an ordered
+sequence (as opposed to `Union`, which is a type consisting of a sequence of
+members where storage overlaps).
 
 A C struct that looks like this:
 
@@ -416,10 +483,11 @@ A C struct that looks like this:
         year  => Int
     ];
 
+All fundamental and aggregate types may be found inside of a `Struct`.
+
 ## `ArrayRef[ ... ]`
 
-The elements of the array must pass the additional constraint. For example
-`ArrayRef[Int]` should be a reference to an array of numbers.
+The elements of the array must pass the additional size constraint.
 
 An array length must be given:
 
@@ -430,7 +498,7 @@ An array length must be given:
 
 ## `Union[ ... ]`
 
-A union is a type consisting of a sequence of members whose storage overlaps
+A union is a type consisting of a sequence of members with overlapping storage
 (as opposed to `Struct`, which is a type consisting of a sequence of members
 whose storage is allocated in an ordered sequence).
 
@@ -455,22 +523,29 @@ A C union that looks like this:
 
 ## `CodeRef[ ... ]`
 
-A value where `ref($value)` equals `CODE`.
+A value where `ref($value)` equals `CODE`. This would be how callbacks are
+defined.
 
-The argument list and return value must pass the additional constraint. For
-example, `CodeRef[[Int, Int]=`Int\]> `typedef int (*fuc)(int a, int b);`; that
-is function that accepts two integers and returns an integer.
+The argument list and return value must be defined. For example,
+`CodeRef[[Int, Int]=`Int\]> ~~ `typedef int (*fuc)(int a, int b);`; that is to
+say our function accepts two integers and returns an integer.
 
-    CodeRef[[] => Void]; # typedef void (*function)();
-    CodeRef[[Pointer[Int]] => Int]; # typedef Int (*function)(int * a);
+    CodeRef[[] => Void];                # typedef void (*function)();
+    CodeRef[[Pointer[Int]] => Int];     # typedef Int (*function)(int * a);
     CodeRef[[Str, Int] => Struct[...]]; # typedef struct Person (*function)(chat * name, int age);
 
 ## `InstanceOf[ ... ]`
 
+    InstanceOf['Some::Class']
+
+A blessed object of a certain type. When used as an lvalue, the result is
+properly blessed. As an rvalue, the reference is checked to be a subclass of
+the given package.
+
 ## `Any`
 
-Anything you dump here will be passed along unmodified. We hand off whatever
-`SV*` perl gives us without copying it.
+Anything you dump here will be passed along unmodified. We hand off a pointer
+to the `SV*` perl gives us without copying it.
 
 ## `Enum[ ... ]`
 
@@ -501,8 +576,11 @@ enumeration. The value of the first enumerator (if it is not defined) is zero.
     # two   = b
     # three = a
 
+As you can see, enum values may allude to earlier defined values and even basic
+arithmetic is supported.
+
 Additionally, if you `typedef` the enum into a given namespace, you may refer
-to elements by name:
+to elements by name. They are defined as dualvars so that works:
 
     typedef color => Enum[ 'RED', 'GREEN', 'BLUE' ];
     print color::RED();     # RED
@@ -525,6 +603,10 @@ Same as `Enum`.
 Check out [FFI::Platypus](https://metacpan.org/pod/FFI%3A%3APlatypus) for a more robust and mature FFI.
 
 Examples found in `eg/`.
+
+[LibUI](https://metacpan.org/pod/LibUI) for a larger demo project based on Affix
+
+[Types::Standard](https://metacpan.org/pod/Types%3A%3AStandard) for the inspiration of the advisory types system.
 
 # LICENSE
 

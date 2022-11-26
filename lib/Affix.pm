@@ -373,12 +373,51 @@ design your own low level FFI, see L<Dyn.pm|Dyn>.
 
 But if you're just looking for a fast FFI system, keep reading.
 
-=head1 C<:Native> CODE attribute
+Note: This is experimental software and is subject to change as long as this
+disclaimer is here.
 
-While most of the upstream API is covered in the L<Dyn::Call>,
-L<Dyn::Callback>, and L<Dyn::Load> packages, all the sugar is right here in
-C<Affix>. The simplest but least flexible use of C<Affix> would look something
-like this:
+=head1 Basic Usage
+
+The basic API here is rather simple but not lacking in power.
+
+=head2 C<affix( ... )>
+
+Wraps a given symbol in a named perl sub.
+
+    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+
+=head2 C<wrap( ... )>
+
+Creates a wrapper around a given symbol in a given library.
+
+    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
+    warn $pow->(5, 10); # 5**10
+
+Expected parameters include:
+
+=over
+
+=item C<lib>
+
+pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ...
+)> >> or the path of the library as a string
+
+=item C<symbol_name>
+
+the name of the symbol to call
+
+=item C<signature>
+
+signature defining argument types, return type, and optionally the calling
+convention used
+
+=back
+
+Returns a code reference.
+
+=head2 C<:Native> CODE attribute
+
+All the sugar is right here in the :Native code attribute.
 
     use Affix;
     sub some_iiZ_func : Native('somelib.so') : Signature([Int, Long, Str] => Void);
@@ -421,40 +460,25 @@ All of the following methods may be imported by name or with the C<:sugar> tag.
 
 Note that everything here is subject to change before v1.0.
 
-=head1 C<affix( ... )>
-
-Wraps a given symbol in a named perl sub.
-
-    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
-
-=head1 C<wrap( ... )>
-
-Creates a wrapper around a given symbol in a given library.
-
-    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
-    warn $pow->(5, 10); # 5**10
-
-Expected parameters include:
-
-=over
-
-=item C<lib> - pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ... )> >> or the path of the library as a string
-
-=item C<symbol_name> - the name of the symbol to call
-
-=item C<signature> - signature defining argument types, return type, and optionally the calling convention used
-
-=back
-
-Returns a code reference.
-
 =head1 Signatures
 
-C<dyncall> uses an almost C<pack>-like syntax to define signatures which is
-simple and powerful but Affix is inspired by L<Type::Standard>. See
-L<Affix::Types> for more.
+Affix's advisory signatures are required to give us a little hint about what we
+should expect.
 
-=head1 Library paths and names
+    [ Int, ArrayRef[ Int, 100 ], Str ] => Int
+
+Arguments are defined in a list: C<[ Int, ArrayRef[ Char, 5 ], Str ]>
+
+The return value comes next: C<Int>
+
+To call the function with such a signature, your Perl would look like this:
+
+    mh $int = func( 500, [ 'a', 'b', 'x', '4', 'H' ], 'Test');
+
+See the aptly named section entitled L<Types|/Types> for more on the possible
+types.
+
+=head1 Library Paths and Names
 
 The C<Native> attribute, C<affix( ... )>, and C<wrap( ... )> all accept the
 library name, the full path, or a subroutine returning either of the two. When
@@ -614,6 +638,34 @@ pointed to by C<$dest>.
 
 Returns the size, in bytes, of the L<type|/Types> passed to it.
 
+=head1 Utility Functions
+
+Here's some thin cushions for the rougher edges of wrapping libraries.
+
+They may be imported by name for now but might be renamed, removed, or changed
+in the future.
+
+=head2 C<ptr2sv( ... )>
+
+    my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+
+This function will parse a pointer into a Perl HashRef.
+
+=head2 C<sv2ptr( ... )>
+
+    my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
+
+This function will coerce a Perl HashRef into a pointer.
+
+=head2 C<DumpHex( ... )>
+
+    DumpHex( $ptr, $length );
+
+Dumps C<$length> bytes of raw data from a given point in memory.
+
+This is a debugging function that probably shouldn't find its way into your
+code.
+
 =head1 Types
 
 While Raku offers a set of native types with a fixed, and known, representation
@@ -729,21 +781,29 @@ type|https://en.wikipedia.org/wiki/Double-precision_floating-point_format>.
 
 =head3 C<SSize_t>
 
+Signed integer type.
+
 =head3 C<Size_t>
+
+Unsigned integer type often expected as the result of C<sizeof> or C<offsetof>
+but can be found elsewhere.
 
 =head2 C<Str>
 
 Automatically handle null terminated character pointers with this rather than
-trying to defined a parameterized C<Pointer[...]> type like as C<Pointer[Char]>
-and doing it yourself.
+trying using C<Pointer[Char]> and doing it yourself.
 
-You'll learn a bit more about parameterized types in the next section.
+You'll learn a bit more about C<Pointer[...]> and other parameterized types in
+the next section.
 
 =head1 Parameterized Types
 
 Some types must be provided with more context data.
 
 =head2 C<Pointer[ ... ]>
+
+    Pointer[Int]  ~~ int *
+    Pointer[Void] ~~ void *
 
 Create pointers to (almost) all other defined types including C<Struct> and
 C<Void>.
@@ -753,15 +813,29 @@ To handle a pointer to an object, see L<InstanceOf>.
 Void pointers (C<Pointer[Void]>) might be created with C<malloc> and other
 memory related functions.
 
+=begin future
+
 =head2 C<Aggregate>
 
 This is currently undefined and reserved for possible future use.
 
+=end future
+
 =head2 C<Struct[ ... ]>
 
-A struct is a type consisting of a sequence of members whose storage is
-allocated in an ordered sequence (as opposed to C<Union>, which is a type
-consisting of a sequence of members whose storage overlaps).
+    Struct[                    struct {
+        dob => Struct[              struct {
+            year  => Int,               int year;
+            month => Int,   ~~          int month;
+            day   => Int                int day;
+        ],                          } dob;
+        name => Str,                char *name;
+        wId  => Long                long wId;
+    ];                          };
+
+A struct consists of a sequence of members with storage allocated in an ordered
+sequence (as opposed to C<Union>, which is a type consisting of a sequence of
+members where storage overlaps).
 
 A C struct that looks like this:
 
@@ -779,10 +853,11 @@ A C struct that looks like this:
         year  => Int
     ];
 
+All fundamental and aggregate types may be found inside of a C<Struct>.
+
 =head2 C<ArrayRef[ ... ]>
 
-The elements of the array must pass the additional constraint. For example
-C<ArrayRef[Int]> should be a reference to an array of numbers.
+The elements of the array must pass the additional size constraint.
 
 An array length must be given:
 
@@ -793,7 +868,7 @@ An array length must be given:
 
 =head2 C<Union[ ... ]>
 
-A union is a type consisting of a sequence of members whose storage overlaps
+A union is a type consisting of a sequence of members with overlapping storage
 (as opposed to C<Struct>, which is a type consisting of a sequence of members
 whose storage is allocated in an ordered sequence).
 
@@ -818,22 +893,29 @@ A C union that looks like this:
 
 =head2 C<CodeRef[ ... ]>
 
-A value where C<ref($value)> equals C<CODE>.
+A value where C<ref($value)> equals C<CODE>. This would be how callbacks are
+defined.
 
-The argument list and return value must pass the additional constraint. For
-example, C<CodeRef[[Int, Int]=>Int]> C<typedef int (*fuc)(int a, int b);>; that
-is function that accepts two integers and returns an integer.
+The argument list and return value must be defined. For example,
+C<CodeRef[[Int, Int]=>Int]> ~~ C<typedef int (*fuc)(int a, int b);>; that is to
+say our function accepts two integers and returns an integer.
 
-    CodeRef[[] => Void]; # typedef void (*function)();
-    CodeRef[[Pointer[Int]] => Int]; # typedef Int (*function)(int * a);
+    CodeRef[[] => Void];                # typedef void (*function)();
+    CodeRef[[Pointer[Int]] => Int];     # typedef Int (*function)(int * a);
     CodeRef[[Str, Int] => Struct[...]]; # typedef struct Person (*function)(chat * name, int age);
 
 =head2 C<InstanceOf[ ... ]>
 
+    InstanceOf['Some::Class']
+
+A blessed object of a certain type. When used as an lvalue, the result is
+properly blessed. As an rvalue, the reference is checked to be a subclass of
+the given package.
+
 =head2 C<Any>
 
-Anything you dump here will be passed along unmodified. We hand off whatever
-C<SV*> perl gives us without copying it.
+Anything you dump here will be passed along unmodified. We hand off a pointer
+to the C<SV*> perl gives us without copying it.
 
 =head2 C<Enum[ ... ]>
 
@@ -864,8 +946,11 @@ enumeration. The value of the first enumerator (if it is not defined) is zero.
     # two   = b
     # three = a
 
+As you can see, enum values may allude to earlier defined values and even basic
+arithmetic is supported.
+
 Additionally, if you C<typedef> the enum into a given namespace, you may refer
-to elements by name:
+to elements by name. They are defined as dualvars so that works:
 
     typedef color => Enum[ 'RED', 'GREEN', 'BLUE' ];
     print color::RED();     # RED
@@ -891,6 +976,8 @@ Examples found in C<eg/>.
 
 L<LibUI> for a larger demo project based on Affix
 
+L<Types::Standard> for the inspiration of the advisory types system.
+
 =head1 LICENSE
 
 Copyright (C) Sanko Robinson.
@@ -906,7 +993,8 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 =begin stopwords
 
 dyncall OpenBSD FreeBSD macOS DragonFlyBSD NetBSD iOS ReactOS mips mips64 ppc32
-ppc64 sparc sparc64 co-existing varargs variadic struct enum eXtension
+ppc64 sparc sparc64 co-existing varargs variadic struct enum eXtension rvalue
+dualvars
 
 =end stopwords
 

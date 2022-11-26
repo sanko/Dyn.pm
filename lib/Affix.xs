@@ -1349,6 +1349,20 @@ CODE:
 OUTPUT:
     RETVAL
 
+void
+DumpHex(DCpointer ptr, size_t size)
+CODE:
+    DumpHex(ptr, size);
+
+BOOT :
+// clang-format on
+{
+    export_function("Affix", "sv2ptr", "utility");
+    export_function("Affix", "ptr2sv", "utility");
+    export_function("Affix", "DumpHex", "utility");
+}
+// clang-format off
+
 MODULE = Affix PACKAGE = Affix::ArrayRef
 
 void
