@@ -38,7 +38,6 @@ eg/sdl.pl
 eg/scratch.pl
 eg/undef.pl
 extract/
-src/
 temp/
 
 eg/attrs.pl
@@ -48,3 +47,17 @@ eg/sin.pl
 lib/Dyn/Sugar.pm
 object_pad.h
 eg/_Inline/
+
+dyncall/.hg/
+Makefile
+Makefile.config
+*.a
+
+builder/*copy.pm
+eg/*.map
+eg/*.pl
+eg/lib/*.pm
+eg/*.c
+eg/*.orig
+eg/vgcore.*
+lib/Dyn.xs.orig
