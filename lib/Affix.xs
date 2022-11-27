@@ -13,12 +13,12 @@ typedef struct
     char *sig;
     size_t sig_len;
     char ret;
-    char mode;
     void *fptr;
     char *perl_sig;
     DLLib *lib;
     AV *args;
     SV *retval;
+    bool reset;
 } Call;
 
 typedef struct
@@ -484,14 +484,9 @@ XS_INTERNAL(Types_sig) {
     dXSARGS;
     dXSI32;
     dXSTARG;
-
     if (PL_phase == PERL_PHASE_DESTRUCT) XSRETURN_IV(0);
-
     // warn("Types_sig %c/%d", ix, ix);
-    ST(0) = sv_2mortal(newSVpv((char *)&ix, 1));
-    // ST(0) = newSViv((char)ix);
-
-    XSRETURN(1);
+    XSRETURN_PV((char *)&ix);
 }
 
 XS_INTERNAL(Types_return_typedef) {
@@ -529,14 +524,15 @@ XS_INTERNAL(Affix_call) {
     dMY_CXT;
 
     Call *call = (Call *)XSANY.any_ptr;
-    dcReset(MY_CXT.cvm);
+    if (call->reset) dcReset(MY_CXT.cvm);
     bool pointers = false;
-
-    /*warn("Calling at %s line %d", __FILE__, __LINE__);
-    warn("%d items at %s line %d", items, __FILE__, __LINE__);
-    warn("sig_len: %d at %s line %d", call->sig_len, __FILE__, __LINE__);
-    warn("sig: %s at %s line %d", call->sig, __FILE__, __LINE__);*/
-
+    /*
+        warn("Calling at %s line %d", __FILE__, __LINE__);
+        warn("%d items at %s line %d", items, __FILE__, __LINE__);
+        warn("sig_len: %d at %s line %d", call->sig_len, __FILE__, __LINE__);
+        warn("sig: %s at %s line %d", call->sig, __FILE__, __LINE__);
+        warn("perl_sig: %s at %s line %d", call->perl_sig, __FILE__, __LINE__);
+    */
     if (call->sig_len != items) {
         if (call->sig_len < items) croak("Too many arguments");
         if (call->sig_len > items) croak("Not enough arguments");
@@ -564,7 +560,7 @@ XS_INTERNAL(Affix_call) {
     char _type;
     DCpointer pointer[call->sig_len];
     bool l_pointer[call->sig_len];
-
+    size_t sig_pos = 0;
     for (int i = 0; i < items; ++i) {
         /*warn("Working on element %d of %d (type: %c) at %s line %d", i + 1, call->sig_len,
              call->sig[i], __FILE__, __LINE__);*/
@@ -574,7 +570,7 @@ XS_INTERNAL(Affix_call) {
             char *tmp = SvPV_nolen(type);
             _type = tmp[0];
         }*/
-        _type = call->sig[i];
+        _type = call->sig[sig_pos++];
         switch (_type) {
         case DC_SIGCHAR_VOID:
             break;
@@ -785,24 +781,10 @@ XS_INTERNAL(Affix_call) {
         case DC_SIGCHAR_STRUCT: {
             if (!SvROK(value) || SvTYPE(SvRV(value)) != SVt_PVHV)
                 croak("Type of arg %d must be a hash ref", i + 1);
-
             SV *field = *av_fetch(call->args, i, 0); // Make broad assumptions
-            // DCaggr *agg = _aggregate(aTHX_ field);
             DCpointer ptr = safemalloc(_sizeof(aTHX_ field));
-
-            // static DCaggr *sv2ptr(pTHX_ SV *type, SV *data, DCpointer ptr, bool packed,
-            // size_t pos) {
             DCaggr *agg = sv2ptr(aTHX_ field, value, ptr, false, 0);
-
-            // sv_dump(field);
-            // sv_dump(value);
-
-            // DumpHex(ptr, 12);
-            // DumpHex(ptr, _sizeof(aTHX_ field));
-
             dcArgAggr(MY_CXT.cvm, agg, ptr);
-            // warn("here at %s line %d", __FILE__, __LINE__);
-
         } break;
         case DC_SIGCHAR_ENUM:
             dcArgInt(MY_CXT.cvm, (int)(SvIV(value)));
@@ -813,6 +795,12 @@ XS_INTERNAL(Affix_call) {
         case DC_SIGCHAR_ENUM_CHAR:
             dcArgChar(MY_CXT.cvm, (char)(SvIOK(value) ? SvIV(value) : *SvPV_nolen(value)));
             break;
+        case DC_SIGCHAR_CC_PREFIX: {
+            SV *field = *av_fetch(call->args, i, 0); // Make broad assumptions
+            char cc = call->sig[sig_pos++];
+            dcMode(MY_CXT.cvm, dcGetModeFromCCSigChar(cc));
+            if (cc != DC_SIGCHAR_CC_ELLIPSIS_VARARGS) dcReset(MY_CXT.cvm);
+        } break;
         default:
             croak("--> Unfinished: [%c/%d]%s", call->sig[i], i, call->sig);
         }
@@ -1040,6 +1028,9 @@ XS_INTERNAL(Affix_DESTROY) {
         /* Int->sig == 'i'; Struct[Int, Float]->sig == '{if}' */                                   \
         cv = newXSproto_portable(form("%s::sig", package), Types_sig, file, "$");                  \
         XSANY.any_i32 = (int)SIGCHAR;                                                              \
+        /* embed an extra character inside a method call to get the 'real' C type*/                \
+        cv = newXSproto_portable(form("%s::csig", package), Types_sig, file, "$");                 \
+        XSANY.any_i32 = (int)SIGCHAR_C;                                                            \
         /* types objects can stringify to sigchars */                                              \
         cv = newXSproto_portable(form("%s::(\"\"", package), Types_sig, file, ";$");               \
         XSANY.any_i32 = (int)SIGCHAR;                                                              \
@@ -1107,12 +1098,24 @@ BOOT:
     TYPE("CharEnum", DC_SIGCHAR_ENUM_CHAR, DC_SIGCHAR_CHAR);
     set_isa("Affix::Type::CharEnum", "Affix::Type::Enum");
 
+    TYPE("CC_DEFAULT", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_DEFAULT);
+    TYPE("CC_THISCALL", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_THISCALL);
+    TYPE("CC_ELLIPSIS", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_ELLIPSIS);
+    TYPE("CC_ELLIPSIS_VARARGS", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_ELLIPSIS_VARARGS);
+    TYPE("CC_CDECL", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_CDECL);
+    TYPE("CC_STDCALL", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_STDCALL);
+    TYPE("CC_FASTCALL_MS", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_FASTCALL_MS);
+    TYPE("CC_FASTCALL_GNU", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_FASTCALL_GNU);
+    TYPE("CC_THISCALL_MS", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_THISCALL_MS);
+    TYPE("CC_THISCALL_GNU", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_THISCALL_GNU);
+    TYPE("CC_ARM_ARM", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_ARM_ARM);
+    TYPE("CC_ARM_THUMB", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_ARM_THUMB);
+    TYPE("CC_SYSCALL", DC_SIGCHAR_CC_PREFIX, DC_SIGCHAR_CC_SYSCALL);
+
     // Enum[]?
     export_function("Affix", "typedef", "types");
     export_function("Affix", "wrap", "default");
     export_function("Affix", "affix", "default");
-    export_function("Affix", "MODIFY_CODE_ATTRIBUTES", "sugar");
-    export_function("Affix", "AUTOLOAD", "sugar");
     export_function("Affix", "MODIFY_CODE_ATTRIBUTES", "default");
     export_function("Affix", "AUTOLOAD", "default");
 }
@@ -1162,15 +1165,14 @@ OUTPUT:
     RETVAL
 
 SV *
-affix(lib, symbol, args, ret, mode = DC_SIGCHAR_CC_DEFAULT, func_name = (ix == 1) ? NULL : symbol)
+affix(lib, symbol, args, ret, func_name = (ix == 1) ? NULL : symbol)
     const char * symbol
     AV * args
     SV * ret
-    char mode
     const char * func_name
 ALIAS:
     affix = 0
-    wrap   = 1
+    wrap  = 1
 PREINIT:
     dMY_CXT;
 CODE:
@@ -1223,11 +1225,9 @@ CODE:
     }
     Newx(call, 1, Call);
 
-    // warn("_load(..., %s, '%c')", symbol, mode);
-    call->mode = mode;
     call->lib = lib;
     call->fptr = dlFindSymbol(call->lib, symbol);
-    call->sig_len = av_count(args);
+    size_t args_len = av_count(args);
 
     if (call->fptr == NULL) { // TODO: throw a warning
         safefree(call);
@@ -1236,36 +1236,62 @@ CODE:
 
     call->retval = SvREFCNT_inc(ret);
 
-    Newxz(call->sig, call->sig_len, char);
-    Newxz(call->perl_sig, call->sig_len, char);
+    Newxz(call->sig, args_len * 2, char);
+    Newxz(call->perl_sig, args_len, char);
 
-    char c_sig[call->sig_len];
+    char c_sig[args_len];
     call->args = newAV();
-    int pos = 0;
-    for (int i = 0; i < call->sig_len; ++i) {
+    size_t perl_sig_pos = 0;
+    size_t c_sig_pos = 0;
+    call->sig_len = 0;
+    call->reset = true;
+    for (int i = 0; i < args_len; ++i) {
         SV **type_ref = av_fetch(args, i, 0);
         if (!(sv_isobject(*type_ref) && sv_derived_from(*type_ref, "Affix::Type::Base")))
             croak("Given type for arg %d is not a subclass of Affix::Type::Base", i);
         av_push(call->args, SvREFCNT_inc(*type_ref));
         char *str = SvPVbytex_nolen(*type_ref);
-        call->sig[i] = str[0];
+        call->sig[c_sig_pos++] = str[0];
         switch (str[0]) {
         case DC_SIGCHAR_CODE:
-            call->perl_sig[pos] = '&';
+            call->perl_sig[perl_sig_pos] = '&';
             break;
         case DC_SIGCHAR_ARRAY:
-            call->perl_sig[pos++] = '\\';
-            call->perl_sig[pos] = '@';
+            call->perl_sig[perl_sig_pos++] = '\\';
+            call->perl_sig[perl_sig_pos] = '@';
             break;
         case DC_SIGCHAR_STRUCT:
-            call->perl_sig[pos++] = '\\';
-            call->perl_sig[pos] = '%'; // TODO: Get actual type
+            call->perl_sig[perl_sig_pos++] = '\\';
+            call->perl_sig[perl_sig_pos] = '%'; // TODO: Get actual type
             break;
+        case DC_SIGCHAR_CC_PREFIX: { // Don't add to perl sig or inc arg count
+            char cc[1];
+            {
+                dSP;
+                int count;
+                ENTER;
+                SAVETMPS;
+                PUSHMARK(SP);
+                EXTEND(SP, 1);
+                PUSHs(*type_ref);
+                PUTBACK;
+                count = call_method("csig", G_SCALAR);
+                SPAGAIN;
+                if (count == 1) Copy(POPp, cc, 1, char);
+                PUTBACK;
+                FREETMPS;
+                LEAVE;
+            }
+            call->sig[c_sig_pos++] = cc[0];
+            if (cc[0] != DC_SIGCHAR_CC_ELLIPSIS_VARARGS) call->reset = false;
+        }
+            continue;
         default:
-            call->perl_sig[pos] = '$';
+            call->perl_sig[perl_sig_pos] = '$';
             break;
         }
-        ++pos;
+        ++call->sig_len;
+        ++perl_sig_pos;
     }
     {
         char *str = SvPVbytex_nolen(ret);
@@ -1278,14 +1304,8 @@ CODE:
 
     CV *cv;
     STMT_START {
-
-        // cv = newXSproto_portable(func_name, XS_Affix__call_Affix,
-        // (char*)__FILE__, call->perl_sig); cv = get_cvs("Affix::_call_Affix", 0)
-
         cv = newXSproto_portable(func_name, Affix_call, (char *)__FILE__, call->perl_sig);
-
         if (cv == NULL) croak("ARG! Something went really wrong while installing a new XSUB!");
-        ////warn("Q");
         XSANY.any_ptr = (DCpointer)call;
     }
     STMT_END;

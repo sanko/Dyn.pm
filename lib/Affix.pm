@@ -55,9 +55,10 @@ package Affix 0.04 {    # 'FFI' is my middle name!
                 scalar locate_lib( $_delay{$sub}[1], $_delay{$sub}[2] ) :
                 undef;
 
-            #ddx [ $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6], $_delay{$sub}[7] ];
-            my $cv
-                = affix( $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6], $_delay{$sub}[7] );
+            #use Data::Dump;
+            #ddx [ $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6] ];
+            my $cv = affix( $lib, $_delay{$sub}[3], $sig, $ret, $_delay{$sub}[6] );
+            Carp::croak 'Undefined subroutine &' . $_delay{$sub}[6] unless $cv;
             delete $_delay{$sub};
             return &$cv;
         }
@@ -76,7 +77,7 @@ package Affix 0.04 {    # 'FFI' is my middle name!
 
         #use Data::Dump;
         #ddx \@_;
-        my ( $library, $library_version, $signature, $return, $symbol, $full_name, $mode );
+        my ( $library, $library_version, $signature, $return, $symbol, $full_name );
         for my $attribute (@attributes) {
             if ( $attribute =~ m[^Native(?:\(\s*(.+)\s*\)\s*)?$] ) {
                 ( $library, $library_version ) = Text::ParseWords::parse_line( '\s*,\s*', 1, $1 );
@@ -89,25 +90,6 @@ package Affix 0.04 {    # 'FFI' is my middle name!
             elsif ( $attribute =~ m[^Symbol\(\s*(['"])?\s*(.+)\s*\1\s*\)$] ) {
                 $symbol = $2;
             }
-            elsif ( $attribute =~ m[^Mode\(\s*(DC_SIGCHAR_CC_.+?)\s*\)$] ) {
-                $mode    # Don't wait for Dyn::Call::DC_SIGCHAR...
-                    = $1 eq 'DC_SIGCHAR_CC_DEFAULT'        ? DC_SIGCHAR_CC_DEFAULT :
-                    $1 eq 'DC_SIGCHAR_CC_THISCALL'         ? DC_SIGCHAR_CC_THISCALL :
-                    $1 eq 'DC_SIGCHAR_CC_ELLIPSIS'         ? DC_SIGCHAR_CC_ELLIPSIS :
-                    $1 eq 'DC_SIGCHAR_CC_ELLIPSIS_VARARGS' ? DC_SIGCHAR_CC_ELLIPSIS_VARARGS :
-                    $1 eq 'DC_SIGCHAR_CC_CDECL'            ? DC_SIGCHAR_CC_CDECL :
-                    $1 eq 'DC_SIGCHAR_CC_STDCALL'          ? DC_SIGCHAR_CC_STDCALL :
-                    $1 eq 'DC_SIGCHAR_CC_FASTCALL_MS'      ? DC_SIGCHAR_CC_FASTCALL_MS :
-                    $1 eq 'DC_SIGCHAR_CC_FASTCALL_GNU'     ? DC_SIGCHAR_CC_FASTCALL_GNU :
-                    $1 eq 'DC_SIGCHAR_CC_THISCALL_MS'      ? DC_SIGCHAR_CC_THISCALL_MS :
-                    $1 eq 'DC_SIGCHAR_CC_THISCALL_GNU'     ? DC_SIGCHAR_CC_THISCALL_GNU :
-                    $1 eq 'DC_SIGCHAR_CC_ARM_ARM'          ? DC_SIGCHAR_CC_ARM_ARM :
-                    $1 eq 'DC_SIGCHAR_CC_ARM_THUMB'        ? DC_SIGCHAR_CC_ARM_THUMB :
-                    $1 eq 'DC_SIGCHAR_CC_SYSCALL'          ? DC_SIGCHAR_CC_SYSCALL :
-                    length($1) == 1                        ? $1 :
-                    return $attribute;
-                $mode = ord $mode if $mode =~ /\D/;
-            }
 
            #elsif ( $attribute =~ m[^Signature\s*?\(\s*(.+?)?(?:\s*=>\s*(\w+)?)?\s*\)$] ) { # pretty
             elsif ( $attribute =~ m[^Signature\(\s*(\[.*\])\s*=>\s*(.*)\)$] ) {    # pretty
@@ -116,7 +98,6 @@ package Affix 0.04 {    # 'FFI' is my middle name!
             }
             else { return $attribute }
         }
-        $mode      //= DC_SIGCHAR_CC_DEFAULT();
         $signature //= '[]';
         $return    //= 'Void';
         $full_name = subname $code;    #$library, $library_version,
@@ -129,19 +110,18 @@ package Affix 0.04 {    # 'FFI' is my middle name!
             #use Data::Dump;
             #ddx [
             #    $package,   $library, $library_version, $symbol,
-            #    $signature, $return,  $mode,            $full_name
+            #    $signature, $return,  $full_name
             #];
             if ( defined &{$full_name} ) {    #no strict 'refs';
 
                 # TODO: call this defined sub and pass the wrapped symbol and then the passed args
                 ...;
                 return affix( locate_lib( $library, $library_version ),
-                    $symbol, $signature, $return, $mode, $full_name );
+                    $symbol, $signature, $return, $full_name );
             }
-            $_delay{$full_name} = [
-                $package,   $library, $library_version, $symbol,
-                $signature, $return,  $mode,            $full_name
-            ];
+            $_delay{$full_name}
+                = [ $package, $library, $library_version, $symbol, $signature, $return,
+                $full_name ];
         }
         return;
     }
@@ -348,6 +328,32 @@ package Affix 0.04 {    # 'FFI' is my middle name!
         package Affix::Type::UIntEnum 0.04;
 
         package Affix::Type::CharEnum 0.04;
+
+        package Affix::Type::CC_DEFAULT 0.04;
+
+        package Affix::Type::CC_THISCALL 0.04;
+
+        package Affix::Type::CC_ELLIPSIS 0.04;
+
+        package Affix::Type::CC_ELLIPSIS_VARARGS 0.04;
+
+        package Affix::Type::CC_CDECL 0.04;
+
+        package Affix::Type::CC_STDCALL 0.04;
+
+        package Affix::Type::CC_FASTCALL_MS 0.04;
+
+        package Affix::Type::CC_FASTCALL_GNU 0.04;
+
+        package Affix::Type::CC_THISCALL_MS 0.04;
+
+        package Affix::Type::CC_THISCALL_GNU 0.04;
+
+        package Affix::Type::CC_ARM_ARM 0.04;
+
+        package Affix::Type::CC_ARM_THUMB 0.04;
+
+        package Affix::Type::CC_SYSCALL 0.04;
     }
 };
 1;
@@ -387,9 +393,10 @@ The basic API here is rather simple but not lacking in power.
 
 =head2 C<affix( ... )>
 
-Wraps a given symbol in a named perl sub.
-
     affix( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+    warn pow( 3, 5 );
+
+Attaches a given symbol in a named perl sub.
 
 Parameters include:
 
@@ -397,8 +404,8 @@ Parameters include:
 
 =item C<$lib>
 
-pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ...
-)> >> or the path of the library as a string
+path of the library as a string or pointer returned by L<< C<dlLoadLibrary( ...
+)>|Dyn::Load/C<dlLoadLibrary( ... )> >>
 
 =item C<$symbol_name>
 
@@ -412,23 +419,19 @@ signature defining argument types in an array
 
 return type
 
-=item C<$convention>
-
-optional C<dyncall> calling convention flag; C<DC_SIGCHAR_CC_DEFAULT> by default
-
 =item C<$name>
 
-optional name of affixed sub; <$symbol_name> by default
+optional name of affixed sub; C<$symbol_name> by default
 
 =back
 
-Returns a code reference.
+Returns a code reference on success.
 
 =head2 C<wrap( ... )>
 
 Creates a wrapper around a given symbol in a given library.
 
-    my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
+    my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
     warn $pow->(5, 10); # 5**10
 
 Parameters include:
@@ -452,58 +455,82 @@ signature defining argument types in an array
 
 return type
 
-=item C<$convention>
-
-optional C<dyncall> calling convention flag; C<DC_SIGCHAR_CC_DEFAULT> by default
-
 =back
 
-Returns a code reference.
+C<wrap( ... )> behaves exactly like C<affix( ... )> but returns an anonymous
+subroutine.
 
-=head2 C<:Native> CODE attribute
+=head1 C<:Native> CODE attribute
 
-All the sugar is right here in the :Native code attribute.
+All the sugar is right here in the :Native code attribute. This API is inspired
+by L<Raku's C<native> trait|https://docs.raku.org/language/nativecall>.
+
+A simple example would look like this:
 
     use Affix;
-    sub some_iiZ_func : Native('somelib.so') : Signature([Int, Long, Str] => Void);
-    some_iiZ_func( 100, time, 'Hello!' );
+    sub some_argless_function :Native('something');
+    some_argless_function();
 
-Let's step through what's here...
+The first line imports various code attributes and types. The next line looks
+like a relatively ordinary Perl sub declaration--with a twist. We use the
+C<:Native> attribute in order to specify that the sub is actually defined in a
+native library. The platform-specific extension (e.g., .so or .dll), as well as
+any customary prefixes (e.g., lib) will be added for you.
 
-The second line above looks like a normal Perl sub declaration but includes our
-CODE attributes:
+The first time you call "some_argless_function", the "libsomething" will be
+loaded and the "some_argless_function" will be located in it. A call will then
+be made. Subsequent calls will be faster, since the symbol handle is retained.
 
-=over
+Of course, most functions take arguments or return values--but everything else
+that you can do is just adding to this simple pattern of declaring a Perl sub,
+naming it after the symbol you want to call and marking it with the
+C<:Native>-related attributes.
 
-=item C<:Native>
+Except in the case you are using your own compiled libraries, or any other kind
+of bundled library, shared libraries are versioned, i.e., they will be in a
+file C<libfoo.so.x.y.z>, and this shared library will be symlinked to
+C<libfoo.so.x>. By default, Affix will pick up that file if it's the only
+existing one. This is why it's safer, and advisable, to always include a
+version, this way:
 
-Here, we're specifying that the sub is actually defined in a native library.
-This is inspired by Raku's C<native> trait.
+    sub some_argless_function :Native('foo', v1.2.3)
 
-=item C<:Signature>
+Please check L<the section on the ABIE<sol>API version|/ABI/API version> for
+more information.
 
-Perl's L<signatures|perlsub/Signatures> and L<prototypes|perlsub/Prototypes>
-obviously don't contain type info so we use this attribute to define advisory
-argument and return types.
+=head2 Changing names
 
-=back
+Sometimes you want the name of your Perl subroutine to be different from the
+name used in the library you're loading. Maybe the name is long or has
+different casing or is otherwise cumbersome within the context of the module
+you are trying to create.
 
-Finally, we just call our affixed function. Positional parameters are passed
-through and any result is returned according to the given type. Here, we return
-nothing because our signature claims the function returns C<Void>.
+Affix provides the C<:Symbol> attribute for you to specify the name of the
+native routine in your library that may be different from your Perl subroutine
+name.
 
-To avoid banging your head on a built-in function, you may name your sub
-anything else and let Affix know what symbol to affix:
+    package Foo;
+    use Affix;
+    sub init :Native('foo') :Symbol('FOO_INIT');
 
-    sub my_abs : Native('my_lib.dll') : Signature([Double] => Double) : Symbol('abs');
-    CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
+Inside of C<libfoo> there is a routine called C<FOO_INIT> but, since we're
+creating a module called C<Foo> and we'd rather call the routine as
+C<Foo::init> (instead of C<Foo::FOO_INIT>), we use the symbol trait to specify
+the name of the symbol in C<libfoo> and call the subroutine whatever we want
+(C<init> in this case).
 
-This is by far the fastest way to work with this distribution but it's not by
-any means the only way.
+=head2 Passing and returning values
 
-All of the following methods may be imported by name or with the C<:sugar> tag.
+Normal Perl signatures do not convey the type of arguments a native function
+expects and what it returns so you must define them with our final attribute:
+C<:Signature>
 
-Note that everything here is subject to change before v1.0.
+    use Affix;
+    sub add :Native("calculator") :Signature([Int, Int] => Int);
+
+Here, we have declared that the function takes two 32-bit integers and returns
+a 32-bit integer. You can find the other types that you may pass L<further down
+this page|/Types>.
 
 =head1 Signatures
 
@@ -520,8 +547,9 @@ To call the function with such a signature, your Perl would look like this:
 
     mh $int = func( 500, [ 'a', 'b', 'x', '4', 'H' ], 'Test');
 
-See the aptly named section entitled L<Types|/Types> for more on the possible
-types.
+See the aptly named sections entitled L<Types|/Types> for more on the possible
+types and L<Calling Conventions/Calling Conventions> for flags that may also be
+defined as part of your signature.
 
 =head1 Library Paths and Names
 
@@ -532,33 +560,15 @@ appended with C<.so> (or just appended with C<.dll> on Windows), and will be
 searched for in the paths in the C<LD_LIBRARY_PATH> (C<PATH> on Windows)
 environment variable.
 
-    use Affix;
-    use constant LIBMYSQL => 'mysqlclient';
-    use constant LIBFOO   => '/usr/lib/libfoo.so.1';
-    sub LIBBAR {
-        my $opt = $^O =~ /bsd/ ? 'r' : 'p';
-        my ($path) = qx[ldconfig -$opt | grep libbar];
-        return $1;
-    }
-    # and later
-    sub mysql_affected_rows :Native(LIBMYSQL);
-    sub bar :Native(LIBFOO);
-    sub baz :Native(LIBBAR);
-
 You can also put an incomplete path like C<'./foo'> and Affix will
 automatically put the right extension according to the platform specification.
 If you wish to suppress this expansion, simply pass the string as the body of a
 block.
 
-###### TODO: disable expansion with a block!
-
     sub bar :Native({ './lib/Non Standard Naming Scheme' });
 
 B<BE CAREFUL>: the C<:Native> attribute and constant are evaluated at compile
-time. Don't write a constant that depends on a dynamic variable like:
-
-    # WRONG:
-    use constant LIBMYSQL => $ENV{LIB_MYSQLCLIENT} // 'mysqlclient';
+time.
 
 =head2 ABI/API version
 
@@ -577,8 +587,7 @@ some BSD code does not care for Minor.)
     sub foo1 :Native('foo', v1); # Will try to load libfoo.so.1
     sub foo2 :Native('foo', v1.2.3); # Will try to load libfoo.so.1.2.3
 
-    my $lib = ['foo', 'v1'];
-    sub foo3 :Native($lib);
+    sub pow : Native('m', v6) : Signature([Double, Double] => Double);
 
 =head2 Calling into the standard library
 
@@ -588,7 +597,6 @@ explicit C<undef>.
 
 For example on a UNIX-like operating system, you could use the following code
 to print the home directory of the current user:
-
 
     use Affix;
     typedef PwStruct => Struct [
@@ -1023,6 +1031,51 @@ L<LibUI> for a larger demo project based on Affix
 
 L<Types::Standard> for the inspiration of the advisory types system.
 
+=head1 Calling Conventions
+
+Handle with care! Using these without understanding them can break your code!
+
+Refer to L<the dyncall manual|https://dyncall.org/docs/manual/manualse11.html>,
+L<http://www.angelcode.com/dev/callconv/callconv.html>,
+L<https://en.wikipedia.org/wiki/Calling_convention>, and your local
+university's Comp Sci department for a deeper explanation.
+
+Anyway, here are the current options:
+
+=over
+
+=item C<CC_DEFAULT>
+
+=item C<CC_THISCALL>
+
+=item C<CC_ELLIPSIS>
+
+=item C<CC_ELLIPSIS_VARARGS>
+
+=item C<CC_CDECL>
+
+=item C<CC_STDCALL>
+
+=item C<CC_FASTCALL_MS>
+
+=item C<CC_FASTCALL_GNU>
+
+=item C<CC_THISCALL_MS>
+
+=item C<CC_THISCALL_GNU>
+
+=item C<CC_ARM_ARM>
+
+=item C<CC_ARM_THUMB>
+
+=item C<CC_SYSCALL>
+
+=back
+
+When used in L<signatures/Signatures>, most of these cause the internal
+argument stack to be reset. The exception is C<CC_ELLIPSIS_VARARGS> which is
+used prior to binding varargs of variadic functions.
+
 =head1 LICENSE
 
 Copyright (C) Sanko Robinson.
@@ -1039,7 +1092,7 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 dyncall OpenBSD FreeBSD macOS DragonFlyBSD NetBSD iOS ReactOS mips mips64 ppc32
 ppc64 sparc sparc64 co-existing varargs variadic struct enum eXtension rvalue
-dualvars
+dualvars libsomething versioned
 
 =end stopwords
 

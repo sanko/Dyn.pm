@@ -5,15 +5,17 @@ Affix - A Foreign Function Interface eXtension
 
 # SYNOPSIS
 
-    use Affix;
-    my $lib
-        = $^O eq 'MSWin32'    ? 'ntdll' :
-        $^O eq 'darwin'       ? '/usr/lib/libm.dylib' :
-        $^O eq 'bsd'          ? '/usr/lib/libm.so' :
-        -e '/lib64/libm.so.6' ? '/lib64/libm.so.6' :
-        '/lib/x86_64-linux-gnu/libm.so.6';
-    affix( $lib, 'pow', [ Double, Double ] => Double );
-    print pow( 2, 10 );    # 1024
+```perl
+use Affix;
+my $lib
+    = $^O eq 'MSWin32'    ? 'ntdll' :
+    $^O eq 'darwin'       ? '/usr/lib/libm.dylib' :
+    $^O eq 'bsd'          ? '/usr/lib/libm.so' :
+    -e '/lib64/libm.so.6' ? '/lib64/libm.so.6' :
+    '/lib/x86_64-linux-gnu/libm.so.6';
+affix( $lib, 'pow', [ Double, Double ] => Double );
+print pow( 2, 10 );    # 1024
+```
 
 # DESCRIPTION
 
@@ -31,15 +33,19 @@ The basic API here is rather simple but not lacking in power.
 
 ## `affix( ... )`
 
-Wraps a given symbol in a named perl sub.
+```perl
+affix( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+warn pow( 3, 5 );
+```
 
-    affix( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+Attaches a given symbol in a named perl sub.
 
 Parameters include:
 
 - `$lib`
 
-    pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
+    path of the library as a string or pointer returned by [`dlLoadLibrary( ...
+    )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary)
 
 - `$symbol_name`
 
@@ -53,22 +59,20 @@ Parameters include:
 
     return type
 
-- `$convention`
-
-    optional `dyncall` calling convention flag; `DC_SIGCHAR_CC_DEFAULT` by default
-
 - `$name`
 
-    optional name of affixed sub; &lt;$symbol\_name> by default
+    optional name of affixed sub; `$symbol_name` by default
 
-Returns a code reference.
+Returns a code reference on success.
 
 ## `wrap( ... )`
 
 Creates a wrapper around a given symbol in a given library.
 
-    my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
-    warn $pow->(5, 10); # 5**10
+```perl
+my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+warn $pow->(5, 10); # 5**10
+```
 
 Parameters include:
 
@@ -88,59 +92,97 @@ Parameters include:
 
     return type
 
-- `$convention`
+`wrap( ... )` behaves exactly like `affix( ... )` but returns an anonymous
+subroutine.
 
-    optional `dyncall` calling convention flag; `DC_SIGCHAR_CC_DEFAULT` by default
+# `:Native` CODE attribute
 
-Returns a code reference.
+All the sugar is right here in the :Native code attribute. This API is inspired
+by [Raku's `native` trait](https://docs.raku.org/language/nativecall).
 
-## `:Native` CODE attribute
+A simple example would look like this:
 
-All the sugar is right here in the :Native code attribute.
+```perl
+use Affix;
+sub some_argless_function :Native('something');
+some_argless_function();
+```
 
-    use Affix;
-    sub some_iiZ_func : Native('somelib.so') : Signature([Int, Long, Str] => Void);
-    some_iiZ_func( 100, time, 'Hello!' );
+The first line imports various code attributes and types. The next line looks
+like a relatively ordinary Perl sub declaration--with a twist. We use the
+`:Native` attribute in order to specify that the sub is actually defined in a
+native library. The platform-specific extension (e.g., .so or .dll), as well as
+any customary prefixes (e.g., lib) will be added for you.
 
-Let's step through what's here...
+The first time you call "some\_argless\_function", the "libsomething" will be
+loaded and the "some\_argless\_function" will be located in it. A call will then
+be made. Subsequent calls will be faster, since the symbol handle is retained.
 
-The second line above looks like a normal Perl sub declaration but includes our
-CODE attributes:
+Of course, most functions take arguments or return values--but everything else
+that you can do is just adding to this simple pattern of declaring a Perl sub,
+naming it after the symbol you want to call and marking it with the
+`:Native`-related attributes.
 
-- `:Native`
+Except in the case you are using your own compiled libraries, or any other kind
+of bundled library, shared libraries are versioned, i.e., they will be in a
+file `libfoo.so.x.y.z`, and this shared library will be symlinked to
+`libfoo.so.x`. By default, Affix will pick up that file if it's the only
+existing one. This is why it's safer, and advisable, to always include a
+version, this way:
 
-    Here, we're specifying that the sub is actually defined in a native library.
-    This is inspired by Raku's `native` trait.
+```perl
+sub some_argless_function :Native('foo', v1.2.3)
+```
 
-- `:Signature`
+Please check [the section on the ABI/API version](#abi-api-version) for
+more information.
 
-    Perl's [signatures](https://metacpan.org/pod/perlsub#Signatures) and [prototypes](https://metacpan.org/pod/perlsub#Prototypes)
-    obviously don't contain type info so we use this attribute to define advisory
-    argument and return types.
+## Changing names
 
-Finally, we just call our affixed function. Positional parameters are passed
-through and any result is returned according to the given type. Here, we return
-nothing because our signature claims the function returns `Void`.
+Sometimes you want the name of your Perl subroutine to be different from the
+name used in the library you're loading. Maybe the name is long or has
+different casing or is otherwise cumbersome within the context of the module
+you are trying to create.
 
-To avoid banging your head on a built-in function, you may name your sub
-anything else and let Affix know what symbol to affix:
+Affix provides the `:Symbol` attribute for you to specify the name of the
+native routine in your library that may be different from your Perl subroutine
+name.
 
-    sub my_abs : Native('my_lib.dll') : Signature([Double] => Double) : Symbol('abs');
-    CORE::say my_abs( -75 ); # Should print 75 if your abs is something that makes sense
+```perl
+package Foo;
+use Affix;
+sub init :Native('foo') :Symbol('FOO_INIT');
+```
 
-This is by far the fastest way to work with this distribution but it's not by
-any means the only way.
+Inside of `libfoo` there is a routine called `FOO_INIT` but, since we're
+creating a module called `Foo` and we'd rather call the routine as
+`Foo::init` (instead of `Foo::FOO_INIT`), we use the symbol trait to specify
+the name of the symbol in `libfoo` and call the subroutine whatever we want
+(`init` in this case).
 
-All of the following methods may be imported by name or with the `:sugar` tag.
+## Passing and returning values
 
-Note that everything here is subject to change before v1.0.
+Normal Perl signatures do not convey the type of arguments a native function
+expects and what it returns so you must define them with our final attribute:
+`:Signature`
+
+```perl
+use Affix;
+sub add :Native("calculator") :Signature([Int, Int] => Int);
+```
+
+Here, we have declared that the function takes two 32-bit integers and returns
+a 32-bit integer. You can find the other types that you may pass [further down
+this page](#types).
 
 # Signatures
 
 Affix's advisory signatures are required to give us a little hint about what we
 should expect.
 
-    [ Int, ArrayRef[ Int, 100 ], Str ] => Int
+```perl
+[ Int, ArrayRef[ Int, 100 ], Str ] => Int
+```
 
 Arguments are defined in a list: `[ Int, ArrayRef[ Char, 5 ], Str ]`
 
@@ -148,10 +190,13 @@ The return value comes next: `Int`
 
 To call the function with such a signature, your Perl would look like this:
 
-    mh $int = func( 500, [ 'a', 'b', 'x', '4', 'H' ], 'Test');
+```
+mh $int = func( 500, [ 'a', 'b', 'x', '4', 'H' ], 'Test');
+```
 
-See the aptly named section entitled [Types](#types) for more on the possible
-types.
+See the aptly named sections entitled [Types](#types) for more on the possible
+types and ["Calling Conventions" in Calling Conventions](https://metacpan.org/pod/Calling%20Conventions#Calling-Conventions) for flags that may also be
+defined as part of your signature.
 
 # Library Paths and Names
 
@@ -162,33 +207,17 @@ appended with `.so` (or just appended with `.dll` on Windows), and will be
 searched for in the paths in the `LD_LIBRARY_PATH` (`PATH` on Windows)
 environment variable.
 
-    use Affix;
-    use constant LIBMYSQL => 'mysqlclient';
-    use constant LIBFOO   => '/usr/lib/libfoo.so.1';
-    sub LIBBAR {
-        my $opt = $^O =~ /bsd/ ? 'r' : 'p';
-        my ($path) = qx[ldconfig -$opt | grep libbar];
-        return $1;
-    }
-    # and later
-    sub mysql_affected_rows :Native(LIBMYSQL);
-    sub bar :Native(LIBFOO);
-    sub baz :Native(LIBBAR);
-
 You can also put an incomplete path like `'./foo'` and Affix will
 automatically put the right extension according to the platform specification.
 If you wish to suppress this expansion, simply pass the string as the body of a
 block.
 
-\###### TODO: disable expansion with a block!
-
-    sub bar :Native({ './lib/Non Standard Naming Scheme' });
+```perl
+sub bar :Native({ './lib/Non Standard Naming Scheme' });
+```
 
 **BE CAREFUL**: the `:Native` attribute and constant are evaluated at compile
-time. Don't write a constant that depends on a dynamic variable like:
-
-    # WRONG:
-    use constant LIBMYSQL => $ENV{LIB_MYSQLCLIENT} // 'mysqlclient';
+time.
 
 ## ABI/API version
 
@@ -203,12 +232,13 @@ To avoid that, the native trait allows you to specify the API/ABI version. It
 can be a full version or just a part of it. (Try to stick to Major version,
 some BSD code does not care for Minor.)
 
-    use Affix;
-    sub foo1 :Native('foo', v1); # Will try to load libfoo.so.1
-    sub foo2 :Native('foo', v1.2.3); # Will try to load libfoo.so.1.2.3
+```perl
+use Affix;
+sub foo1 :Native('foo', v1); # Will try to load libfoo.so.1
+sub foo2 :Native('foo', v1.2.3); # Will try to load libfoo.so.1.2.3
 
-    my $lib = ['foo', 'v1'];
-    sub foo3 :Native($lib);
+sub pow : Native('m', v6) : Signature([Double, Double] => Double);
+```
 
 ## Calling into the standard library
 
@@ -219,21 +249,23 @@ explicit `undef`.
 For example on a UNIX-like operating system, you could use the following code
 to print the home directory of the current user:
 
-    use Affix;
-    typedef PwStruct => Struct [
-        name  => Str,     # username
-        pass  => Str,     # hashed pass if shadow db isn't in use
-        uuid  => UInt,    # user
-        guid  => UInt,    # group
-        gecos => Str,     # real name
-        dir   => Str,     # ~/
-        shell => Str      # bash, etc.
-    ];
-    sub getuid : Native : Signature([]=>Int);
-    sub getpwuid : Native : Signature([Int]=>Pointer[PwStruct]);
-    my $data = main::getpwuid( getuid() );
-    use Data::Dumper;
-    print Dumper( Affix::ptr2sv( PwStruct(), $data ) );
+```perl
+use Affix;
+typedef PwStruct => Struct [
+    name  => Str,     # username
+    pass  => Str,     # hashed pass if shadow db isn't in use
+    uuid  => UInt,    # user
+    guid  => UInt,    # group
+    gecos => Str,     # real name
+    dir   => Str,     # ~/
+    shell => Str      # bash, etc.
+];
+sub getuid : Native : Signature([]=>Int);
+sub getpwuid : Native : Signature([Int]=>Pointer[PwStruct]);
+my $data = main::getpwuid( getuid() );
+use Data::Dumper;
+print Dumper( Affix::ptr2sv( PwStruct(), $data ) );
+```
 
 # Memory Functions
 
@@ -243,20 +275,26 @@ tags.
 
 ## `malloc( ... )`
 
-    my $ptr = malloc( $size );
+```perl
+my $ptr = malloc( $size );
+```
 
 Allocates `$size` bytes of uninitialized storage.
 
 ## `calloc( ... )`
 
-    my $ptr = calloc( $num, $size );
+```perl
+my $ptr = calloc( $num, $size );
+```
 
 Allocates memory for an array of `$num` objects of `$size` and initializes
 all bytes in the allocated storage to zero.
 
 ## `realloc( ... )`
 
-    $ptr = realloc( $ptr, $new_size );
+```
+$ptr = realloc( $ptr, $new_size );
+```
 
 Reallocates the given area of memory. It must be previously allocated by
 `malloc( ... )`, `calloc( ... )`, or `realloc( ... )` and not yet freed with
@@ -265,50 +303,64 @@ undefined.
 
 ## `free( ... )`
 
-    free( $ptr );
+```
+free( $ptr );
+```
 
 Deallocates the space previously allocated by `malloc( ... )`, `calloc( ...
 )`, or `realloc( ... )`.
 
 ## `memchr( ... )`
 
-    memchr( $ptr, $ch, $count );
+```
+memchr( $ptr, $ch, $count );
+```
 
 Finds the first occurrence of `$ch` in the initial `$count` bytes (each
 interpreted as unsigned char) of the object pointed to by `$ptr`.
 
 ## `memcmp( ... )`
 
-    my $cmp = memcmp( $lhs, $rhs, $count );
+```perl
+my $cmp = memcmp( $lhs, $rhs, $count );
+```
 
 Compares the first `$count` bytes of the objects pointed to by `$lhs` and
 `$rhs`. The comparison is done lexicographically.
 
 ## `memset( ... )`
 
-    memset( $dest, $ch, $count );
+```
+memset( $dest, $ch, $count );
+```
 
 Copies the value `$ch` into each of the first `$count` characters of the
 object pointed to by `$dest`.
 
 ## `memcpy( ... )`
 
-    memcpy( $dest, $src, $count );
+```
+memcpy( $dest, $src, $count );
+```
 
 Copies `$count` characters from the object pointed to by `$src` to the object
 pointed to by `$dest`.
 
 ## `memmove( ... )`
 
-    memmove( $dest, $src, $count );
+```
+memmove( $dest, $src, $count );
+```
 
 Copies `$count` characters from the object pointed to by `$src` to the object
 pointed to by `$dest`.
 
 ## `sizeof( ... )`
 
-    my $size = sizeof( Int );
-    my $size1 = sizeof( Struct[ name => Str, age => Int ] );
+```perl
+my $size = sizeof( Int );
+my $size1 = sizeof( Struct[ name => Str, age => Int ] );
+```
 
 Returns the size, in bytes, of the [type](#types) passed to it.
 
@@ -321,19 +373,25 @@ in the future.
 
 ## `ptr2sv( ... )`
 
-    my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+```perl
+my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+```
 
 This function will parse a pointer into a Perl HashRef.
 
 ## `sv2ptr( ... )`
 
-    my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
+```perl
+my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
+```
 
 This function will coerce a Perl HashRef into a pointer.
 
 ## `DumpHex( ... )`
 
-    DumpHex( $ptr, $length );
+```
+DumpHex( $ptr, $length );
+```
 
 Dumps `$length` bytes of raw data from a given point in memory.
 
@@ -349,25 +407,27 @@ etc.) and aggregates (struct, array, union).
 
 ## Fundamental Types with Native Representation
 
-    Affix       C99/C++     Rust    C#          pack()  Raku
-    -----------------------------------------------------------------------
-    Void        void/NULL   ->()    void/NULL   -
-    Bool        _Bool       bool    bool        -       bool
-    Char        int8_t      i8      sbyte       c       int8
-    UChar       uint8_t     u8      byte        C       byte, uint8
-    Short       int16_t     i16     short       s       int16
-    UShort      uint16_t    u16     ushort      S       uint16
-    Int         int32_t     i32     int         i       int32
-    UInt        uint32_t    u32     uint        I       uint32
-    Long        int64_t     i64     long        l       int64, long
-    ULong       uint64_t    u64     ulong       L       uint64, ulong
-    LongLong    -           i128                q       longlong
-    ULongLong   -           u128                Q       ulonglong
-    Float       float       f32                 f       num32
-    Double      double      f64                 d       num64
-    SSize_t     SSize_t                                 SSize_t
-    Size_t      size_t                                  size_t
-    Str         char *
+```
+Affix       C99/C++     Rust    C#          pack()  Raku
+-----------------------------------------------------------------------
+Void        void/NULL   ->()    void/NULL   -
+Bool        _Bool       bool    bool        -       bool
+Char        int8_t      i8      sbyte       c       int8
+UChar       uint8_t     u8      byte        C       byte, uint8
+Short       int16_t     i16     short       s       int16
+UShort      uint16_t    u16     ushort      S       uint16
+Int         int32_t     i32     int         i       int32
+UInt        uint32_t    u32     uint        I       uint32
+Long        int64_t     i64     long        l       int64, long
+ULong       uint64_t    u64     ulong       L       uint64, ulong
+LongLong    -           i128                q       longlong
+ULongLong   -           u128                Q       ulonglong
+Float       float       f32                 f       num32
+Double      double      f64                 d       num64
+SSize_t     SSize_t                                 SSize_t
+Size_t      size_t                                  size_t
+Str         char *
+```
 
 Given sizes are minimums measured in bits
 
@@ -376,8 +436,10 @@ Given sizes are minimums measured in bits
 The `Void` type corresponds to the C `void` type. It is generally found in
 typed pointers representing the equivalent to the `void *` pointer in C.
 
-    sub malloc :Native :Signature([Size_t] => Pointer[Void]);
-    my $data = malloc( 32 );
+```perl
+sub malloc :Native :Signature([Size_t] => Pointer[Void]);
+my $data = malloc( 32 );
+```
 
 As the example shows, it's represented by a parameterized `Pointer[ ... ]`
 type, using as parameter whatever the original pointer is pointing to (in this
@@ -475,8 +537,10 @@ Some types must be provided with more context data.
 
 ## `Pointer[ ... ]`
 
-    Pointer[Int]  ~~ int *
-    Pointer[Void] ~~ void *
+```
+Pointer[Int]  ~~ int *
+Pointer[Void] ~~ void *
+```
 
 Create pointers to (almost) all other defined types including `Struct` and
 `Void`.
@@ -488,15 +552,17 @@ memory related functions.
 
 ## `Struct[ ... ]`
 
-    Struct[                    struct {
-        dob => Struct[              struct {
-            year  => Int,               int year;
-            month => Int,   ~~          int month;
-            day   => Int                int day;
-        ],                          } dob;
-        name => Str,                char *name;
-        wId  => Long                long wId;
-    ];                          };
+```perl
+Struct[                    struct {
+    dob => Struct[              struct {
+        year  => Int,               int year;
+        month => Int,   ~~          int month;
+        day   => Int                int day;
+    ],                          } dob;
+    name => Str,                char *name;
+    wId  => Long                long wId;
+];                          };
+```
 
 A struct consists of a sequence of members with storage allocated in an ordered
 sequence (as opposed to `Union`, which is a type consisting of a sequence of
@@ -504,19 +570,23 @@ members where storage overlaps).
 
 A C struct that looks like this:
 
-    struct {
-        char *make;
-        char *model;
-        int   year;
-    };
+```
+struct {
+    char *make;
+    char *model;
+    int   year;
+};
+```
 
 ...would be defined this way:
 
-    Struct[
-        make  => Str,
-        model => Str,
-        year  => Int
-    ];
+```perl
+Struct[
+    make  => Str,
+    model => Str,
+    year  => Int
+];
+```
 
 All fundamental and aggregate types may be found inside of a `Struct`.
 
@@ -526,10 +596,12 @@ The elements of the array must pass the additional size constraint.
 
 An array length must be given:
 
-    ArrayRef[Int, 5];   # int arr[5]
-    ArrayRef[Any, 20];  # SV * arr[20]
-    ArrayRef[Char, 5];  # char arr[5]
-    ArrayRef[Str, 10];  # char *arr[10]
+```
+ArrayRef[Int, 5];   # int arr[5]
+ArrayRef[Any, 20];  # SV * arr[20]
+ArrayRef[Char, 5];  # char arr[5]
+ArrayRef[Str, 10];  # char *arr[10]
+```
 
 ## `Union[ ... ]`
 
@@ -544,17 +616,21 @@ allocated in the same bytes as part of that largest member.
 
 A C union that looks like this:
 
-    union {
-        char  c[5];
-        float f;
-    };
+```
+union {
+    char  c[5];
+    float f;
+};
+```
 
 ...would be defined this way:
 
-    Union[
-        c => ArrayRef[Char, 5],
-        f => Float
-    ];
+```perl
+Union[
+    c => ArrayRef[Char, 5],
+    f => Float
+];
+```
 
 ## `CodeRef[ ... ]`
 
@@ -565,13 +641,17 @@ The argument list and return value must be defined. For example,
 `CodeRef[[Int, Int]=`Int\]> ~~ `typedef int (*fuc)(int a, int b);`; that is to
 say our function accepts two integers and returns an integer.
 
-    CodeRef[[] => Void];                # typedef void (*function)();
-    CodeRef[[Pointer[Int]] => Int];     # typedef Int (*function)(int * a);
-    CodeRef[[Str, Int] => Struct[...]]; # typedef struct Person (*function)(chat * name, int age);
+```perl
+CodeRef[[] => Void];                # typedef void (*function)();
+CodeRef[[Pointer[Int]] => Int];     # typedef Int (*function)(int * a);
+CodeRef[[Str, Int] => Struct[...]]; # typedef struct Person (*function)(chat * name, int age);
+```
 
 ## `InstanceOf[ ... ]`
 
-    InstanceOf['Some::Class']
+```
+InstanceOf['Some::Class']
+```
 
 A blessed object of a certain type. When used as an lvalue, the result is
 properly blessed. As an rvalue, the reference is checked to be a subclass of
@@ -589,27 +669,31 @@ The value of an `Enum` is defined by its underlying type which includes
 
 This type is declared with an list of strings.
 
-    Enum[ 'ALPHA', 'BETA' ];
-    # ALPHA = 0
-    # BETA  = 1
+```
+Enum[ 'ALPHA', 'BETA' ];
+# ALPHA = 0
+# BETA  = 1
+```
 
 Unless an enumeration constant is defined in an array reference, its value is
 the value one greater than the value of the previous enumerator in the same
 enumeration. The value of the first enumerator (if it is not defined) is zero.
 
-    Enum[ 'A', 'B', [C => 10], 'D', [E => 1], 'F', [G => 'F + C'] ];
-    # A = 0
-    # B = 1
-    # C = 10
-    # D = 11
-    # E = 1
-    # F = 2
-    # G = 12
+```perl
+Enum[ 'A', 'B', [C => 10], 'D', [E => 1], 'F', [G => 'F + C'] ];
+# A = 0
+# B = 1
+# C = 10
+# D = 11
+# E = 1
+# F = 2
+# G = 12
 
-    Enum[ [ one => 'a' ], 'two', [ 'three' => 'one' ] ]
-    # one   = a
-    # two   = b
-    # three = a
+Enum[ [ one => 'a' ], 'two', [ 'three' => 'one' ] ]
+# one   = a
+# two   = b
+# three = a
+```
 
 As you can see, enum values may allude to earlier defined values and even basic
 arithmetic is supported.
@@ -617,9 +701,11 @@ arithmetic is supported.
 Additionally, if you `typedef` the enum into a given namespace, you may refer
 to elements by name. They are defined as dualvars so that works:
 
-    typedef color => Enum[ 'RED', 'GREEN', 'BLUE' ];
-    print color::RED();     # RED
-    print int color::RED(); # 0
+```perl
+typedef color => Enum[ 'RED', 'GREEN', 'BLUE' ];
+print color::RED();     # RED
+print int color::RED(); # 0
+```
 
 ## `IntEnum[ ... ]`
 
@@ -642,6 +728,35 @@ Examples found in `eg/`.
 [LibUI](https://metacpan.org/pod/LibUI) for a larger demo project based on Affix
 
 [Types::Standard](https://metacpan.org/pod/Types%3A%3AStandard) for the inspiration of the advisory types system.
+
+# Calling Conventions
+
+Handle with care! Using these without understanding them can break your code!
+
+Refer to [the dyncall manual](https://dyncall.org/docs/manual/manualse11.html),
+[http://www.angelcode.com/dev/callconv/callconv.html](http://www.angelcode.com/dev/callconv/callconv.html),
+[https://en.wikipedia.org/wiki/Calling\_convention](https://en.wikipedia.org/wiki/Calling_convention), and your local
+university's Comp Sci department for a deeper explanation.
+
+Anyway, here are the current options:
+
+- `CC_DEFAULT`
+- `CC_THISCALL`
+- `CC_ELLIPSIS`
+- `CC_ELLIPSIS_VARARGS`
+- `CC_CDECL`
+- `CC_STDCALL`
+- `CC_FASTCALL_MS`
+- `CC_FASTCALL_GNU`
+- `CC_THISCALL_MS`
+- `CC_THISCALL_GNU`
+- `CC_ARM_ARM`
+- `CC_ARM_THUMB`
+- `CC_SYSCALL`
+
+When used in ["Signatures" in signatures](https://metacpan.org/pod/signatures#Signatures), most of these cause the internal
+argument stack to be reset. The exception is `CC_ELLIPSIS_VARARGS` which is
+used prior to binding varargs of variadic functions.
 
 # LICENSE
 

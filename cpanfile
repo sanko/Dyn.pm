@@ -32,3 +32,6 @@ on 'configure' => sub {
     #requires 'Net::SSLeay' => 1.49;
     requires 'Path::Tiny';
 };
+on 'develop' => sub {
+    requires 'Pod::Markdown::Github';
+};

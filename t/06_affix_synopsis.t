@@ -22,5 +22,3 @@ sub get_lib {
 sub pow : Native(get_lib) : Signature([Double, Double]=>Double);
 is pow( 2, 10 ), 1024, 'pow( 2, 10 ) == 1024';
 done_testing;
-
-# /lib/x86_64-linux-gnu/libm.so.6

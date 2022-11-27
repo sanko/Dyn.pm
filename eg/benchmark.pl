@@ -207,34 +207,28 @@ package FFI {
 my $hand_rolled = FFI->obj( FFI::func( FFI::load($libfile), 'sin' ), 'd)d' );
 #
 sub sin_ : Native(libfile) : Signature([Double]=>Double) : Symbol('sin');
-sub sin_var : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_ELLIPSIS_VARARGS);
-sub sin_ell : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_ELLIPSIS);
-sub sin_cdecl : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_CDECL);
-sub sin_std : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_STDCALL);
-sub sin_fc : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_FASTCALL_GNU);
-sub sin_tc : Native(libfile) : Signature([Double]=>Double) : Symbol('sin') :
-    Mode(DC_SIGCHAR_CC_THISCALL_GNU);
+sub sin_var : Native(libfile) : Signature([CC_ELLIPSIS_VARARGS,Double]=>Double) : Symbol('sin');
+sub sin_ell : Native(libfile) : Signature([CC_ELLIPSIS,Double]=>Double) : Symbol('sin');
+sub sin_cdecl : Native(libfile) : Signature([CC_CDECL,Double]=>Double) : Symbol('sin');
+sub sin_std : Native(libfile) : Signature([CC_STDCALL,Double]=>Double) : Symbol('sin');
+sub sin_fc : Native(libfile) : Signature([CC_FASTCALL_GNU,Double]=>Double) : Symbol('sin');
+sub sin_tc : Native(libfile) : Signature([CC_THISCALL_GNU,Double]=>Double) : Symbol('sin');
 #
 my $sin_default  = wrap( $libfile, 'sin', [Double] => Double );
-my $sin_vararg   = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS_VARARGS );
-my $sin_ellipsis = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS );
-my $sin_cdecl    = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_CDECL );
-my $sin_stdcall  = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_STDCALL );
-my $sin_fastcall = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_FASTCALL_GNU );
-my $sin_thiscall = wrap( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_THISCALL_GNU );
+my $sin_vararg   = wrap( $libfile, 'sin', [ CC_ELLIPSIS_VARARGS, Double ] => Double );
+my $sin_ellipsis = wrap( $libfile, 'sin', [ CC_ELLIPSIS,         Double ] => Double );
+my $sin_cdecl    = wrap( $libfile, 'sin', [ CC_CDECL,            Double ] => Double );
+my $sin_stdcall  = wrap( $libfile, 'sin', [ CC_STDCALL,          Double ] => Double );
+my $sin_fastcall = wrap( $libfile, 'sin', [ CC_FASTCALL_GNU,     Double ] => Double );
+my $sin_thiscall = wrap( $libfile, 'sin', [ CC_THISCALL_GNU,     Double ] => Double );
 #
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_DEFAULT,          '_affix_sin_default' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS_VARARGS, '_affix_sin_var' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_ELLIPSIS,         '_affix_sin_ellipse' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_CDECL,            '_affix_sin_cdecl' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_STDCALL,          '_affix_sin_std' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_FASTCALL_GNU,     '_affix_sin_fc' );
-affix( $libfile, 'sin', [Double] => Double, DC_SIGCHAR_CC_THISCALL_GNU,     '_affix_sin_tc' );
+affix( $libfile, 'sin', [Double] => Double, '_affix_sin_default' );
+affix( $libfile, 'sin', [ CC_ELLIPSIS_VARARGS, Double ] => Double, '_affix_sin_var' );
+affix( $libfile, 'sin', [ CC_ELLIPSIS,         Double ] => Double, '_affix_sin_ellipse' );
+affix( $libfile, 'sin', [ CC_CDECL,            Double ] => Double, '_affix_sin_cdecl' );
+affix( $libfile, 'sin', [ CC_STDCALL,          Double ] => Double, '_affix_sin_std' );
+affix( $libfile, 'sin', [ CC_FASTCALL_GNU,     Double ] => Double, '_affix_sin_fc' );
+affix( $libfile, 'sin', [ CC_THISCALL_GNU,     Double ] => Double, '_affix_sin_tc' );
 #
 my $ffi = FFI::Platypus->new( api => 1 );
 $ffi->lib($libfile);
