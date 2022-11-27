@@ -33,29 +33,64 @@ The basic API here is rather simple but not lacking in power.
 
 Wraps a given symbol in a named perl sub.
 
-    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+    affix( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+
+Parameters include:
+
+- `$lib`
+
+    pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
+
+- `$symbol_name`
+
+    the name of the symbol to call
+
+- `$parameters`
+
+    signature defining argument types in an array
+
+- `$return`
+
+    return type
+
+- `$convention`
+
+    optional `dyncall` calling convention flag; `DC_SIGCHAR_CC_DEFAULT` by default
+
+- `$name`
+
+    optional name of affixed sub; &lt;$symbol\_name> by default
+
+Returns a code reference.
 
 ## `wrap( ... )`
 
 Creates a wrapper around a given symbol in a given library.
 
-    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
+    my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
     warn $pow->(5, 10); # 5**10
 
-Expected parameters include:
+Parameters include:
 
-- `lib`
+- `$lib`
 
     pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
 
-- `symbol_name`
+- `$symbol_name`
 
     the name of the symbol to call
 
-- `signature`
+- `$parameters`
 
-    signature defining argument types, return type, and optionally the calling
-    convention used
+    signature defining argument types in an array
+
+- `$return`
+
+    return type
+
+- `$convention`
+
+    optional `dyncall` calling convention flag; `DC_SIGCHAR_CC_DEFAULT` by default
 
 Returns a code reference.
 
@@ -210,7 +245,7 @@ tags.
 
     my $ptr = malloc( $size );
 
-Allocates [$size](https://metacpan.org/pod/%24size) bytes of uninitialized storage.
+Allocates `$size` bytes of uninitialized storage.
 
 ## `calloc( ... )`
 

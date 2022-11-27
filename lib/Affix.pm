@@ -384,32 +384,72 @@ The basic API here is rather simple but not lacking in power.
 
 Wraps a given symbol in a named perl sub.
 
-    affix('C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+    affix( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double] => Double );
+
+Parameters include:
+
+=over
+
+=item C<$lib>
+
+pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ...
+)> >> or the path of the library as a string
+
+=item C<$symbol_name>
+
+the name of the symbol to call
+
+=item C<$parameters>
+
+signature defining argument types in an array
+
+=item C<$return>
+
+return type
+
+=item C<$convention>
+
+optional C<dyncall> calling convention flag; C<DC_SIGCHAR_CC_DEFAULT> by default
+
+=item C<$name>
+
+optional name of affixed sub; <$symbol_name> by default
+
+=back
+
+Returns a code reference.
 
 =head2 C<wrap( ... )>
 
 Creates a wrapper around a given symbol in a given library.
 
-    my $pow = Dyn::wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
+    my $pow = wrap( 'C:\Windows\System32\user32.dll', 'pow', [Double, Double]=>Double );
     warn $pow->(5, 10); # 5**10
 
-Expected parameters include:
+Parameters include:
 
 =over
 
-=item C<lib>
+=item C<$lib>
 
 pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ...
 )> >> or the path of the library as a string
 
-=item C<symbol_name>
+=item C<$symbol_name>
 
 the name of the symbol to call
 
-=item C<signature>
+=item C<$parameters>
 
-signature defining argument types, return type, and optionally the calling
-convention used
+signature defining argument types in an array
+
+=item C<$return>
+
+return type
+
+=item C<$convention>
+
+optional C<dyncall> calling convention flag; C<DC_SIGCHAR_CC_DEFAULT> by default
 
 =back
 
@@ -571,7 +611,7 @@ tags.
 
     my $ptr = malloc( $size );
 
-Allocates L<$size> bytes of uninitialized storage.
+Allocates C<$size> bytes of uninitialized storage.
 
 =head2 C<calloc( ... )>
 
