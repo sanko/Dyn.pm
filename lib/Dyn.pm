@@ -26,7 +26,7 @@ Dyn - dyncall Backed FFI
 
 =head1 SYNOPSIS
 
-    use Dyn qw[:dc :dl]; # Imports all of Dyn::Call's functions
+    use Dyn qw[:dc :dl]; # Imports all functions from Dyn::Call and Dyn::Load
 
 =head1 DESCRIPTION
 
@@ -66,7 +66,6 @@ is a character string that represents a function's arguments and return value
 types. This is an essential part of mapping the more flexible and often
 abstract data types provided in scripting languages to the strict machine-level
 data types used by C-libraries.
-
 
 =for future The high-level C interface functions L<<
 C<dcCallF( ... )>|Dyn::Call/C<dcCallF( ... )> >>, L<< C<dcVCallF( ...
@@ -108,6 +107,9 @@ The following types are supported:
     d                       double
     p                       void *
     Z                       const char * (pointer to a C string)
+    A                       aggregate (struct/union described out-of-band via DCaggr)
+
+See L<Dyn::Call|Dyn::Call/Signature> for importable values.
 
 Please note that using a C<(> at the beginning of a signature string is
 possible, although not required. The character doesn't have any meaning and
@@ -125,6 +127,7 @@ begins. The following signature characters exist:
     Signature character   Calling Convention
     ------------------------------------------------------
     :                     platform's default calling convention
+    *                     C++ this calls (platform native)
     e                     vararg function
     .                     vararg function's variadic/ellipsis part (...), to be specified before first vararg
     c                     only on x86: cdecl
@@ -137,6 +140,8 @@ begins. The following signature characters exist:
     a                     only on ARM: THUMB mode
     $                     syscall
 
+See L<Dyn::Call|Dyn::Call/Modes> for importable values.
+
 =head1 Platform Support
 
 The dyncall library runs on many different platforms and operating systems
@@ -146,8 +151,6 @@ Pi, ReactOS, etc.) and processors (x86, x64, arm (arm & thumb mode), arm64,
 mips, mips64, ppc32, ppc64, sparc, sparc64, etc.).
 
 =head1 See Also
-
-Check out L<FFI::Platypus> for a more robust and mature FFI.
 
 Examples found in C<eg/>.
 
