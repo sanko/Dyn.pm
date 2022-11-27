@@ -153,6 +153,7 @@ package Affix 0.04 {    # 'FFI' is my middle name!
         ( $name, $version ) = @$name if ref $name eq 'ARRAY';
         $name // return ();    # NULL
         return $name if -e $name;
+        return $2    if $name =~ m[{\s*(['"])(.+)\1\s*}];
         {
             my $i   = -1;
             my $pkg = __PACKAGE__;
@@ -273,6 +274,10 @@ package Affix 0.04 {    # 'FFI' is my middle name!
                     @dirs
                 );
             }
+
+            #use Data::Dump;
+            #ddx \@retval;
+            return if !@retval;
             $_lib_cache->{ $name . chr(0) . ( $version // '' ) } = rel2abs pop @retval;
         }
 
