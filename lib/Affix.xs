@@ -14,7 +14,7 @@ I32 get_tack(pTHX_ SV *sv, MAGIC *mg) {
 
 I32 set_tack(pTHX_ SV *sv, MAGIC *mg) {
     var_ptr *ptr = (var_ptr *)mg->mg_ptr;
-    DCpointer val = sv2ptr(aTHX_ ptr->type, sv, ptr->ptr, 0, 0);
+    DCpointer val = SvOK(sv) ? sv2ptr(aTHX_ ptr->type, sv, ptr->ptr, 0, 0) : NULL;
     return (I32)0;
 }
 
@@ -1198,7 +1198,7 @@ OUTPUT:
     RETVAL
 
 void
-global(SV *sv, lib, symbol, SV *type);
+tack(SV *sv, lib, symbol, SV *type);
     const char * symbol
 PREINIT:
 	struct ufuncs uf;
@@ -1485,7 +1485,7 @@ BOOT :
     export_function("Affix", "sv2ptr", "utility");
     export_function("Affix", "ptr2sv", "utility");
     export_function("Affix", "DumpHex", "utility");
-    export_function("Affix", "global", "default");
+    export_function("Affix", "tack", "default");
 }
 // clang-format off
 
