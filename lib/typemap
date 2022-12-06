@@ -37,8 +37,6 @@ DCValue     T_PTRREF
 DCfield   * T_PTRREF
 DCArgs    * T_PTRREF
 
-DCpointer T_PTROBJ_SPECIAL
-
 DCCallback * T_PTROBJ_SPECIAL
 DCCallbackHandler * T_PTRREF
 

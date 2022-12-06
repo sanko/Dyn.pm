@@ -215,8 +215,8 @@ block.
 sub bar :Native({ './lib/Non Standard Naming Scheme' });
 ```
 
-**BE CAREFUL**: the `:Native` attribute and constant are evaluated at compile
-time.
+**BE CAREFUL**: the `:Native` attribute and constant might be evaluated at
+compile time.
 
 ## ABI/API version
 
@@ -250,6 +250,7 @@ to print the home directory of the current user:
 
 ```perl
 use Affix;
+use Data::Dumper;
 typedef PwStruct => Struct [
     name  => Str,     # username
     pass  => Str,     # hashed pass if shadow db isn't in use
@@ -262,9 +263,42 @@ typedef PwStruct => Struct [
 sub getuid : Native : Signature([]=>Int);
 sub getpwuid : Native : Signature([Int]=>Pointer[PwStruct]);
 my $data = main::getpwuid( getuid() );
-use Data::Dumper;
-print Dumper( Affix::ptr2sv( PwStruct(), $data ) );
+print Dumper( cast( $data, Pointer [ PwStruct() ] ) );
 ```
+
+# Exported Variables
+
+Variables exported by a library - also names "global" or "extern" variables -
+can be accessed using `tack( ... )`.
+
+## `tack( ... )`
+
+```
+tack( $errno, 'libc', 'errno', Int );
+print $errno;
+$errno = 0;
+```
+
+This code applies magic to `$error` that binds it to the integer variable
+named "errno" as exported by the [libc](https://metacpan.org/pod/libc) library.
+
+Expected parameters include:
+
+- `$var`
+
+    Perl scalar that will be bound to the exported variable.
+
+- `$lib`
+
+    pointer returned by [`dlLoadLibrary( ... )`](https://metacpan.org/pod/Dyn%3A%3ALoad#dlLoadLibrary) or the path of the library as a string
+
+- `$symbol_name`
+
+    the name of the exported variable
+
+- `$type`
+
+    type that data will be coerced in or out of as required
 
 # Memory Functions
 
@@ -370,21 +404,17 @@ Here's some thin cushions for the rougher edges of wrapping libraries.
 They may be imported by name for now but might be renamed, removed, or changed
 in the future.
 
-## `ptr2sv( ... )`
+## `cast( ... )`
 
 ```perl
-my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+my $hash = cast( $ptr, Struct[i => Int, ... ] );
 ```
 
-This function will parse a pointer into a Perl HashRef.
+This function will parse a pointer into a given target type.
 
-## `sv2ptr( ... )`
-
-```perl
-my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
-```
-
-This function will coerce a Perl HashRef into a pointer.
+The source pointer would have normally been obtained from a call to a native
+subroutine that returned a pointer, a lvalue pointer to a native subroutine,
+or, as part of a `Struct[ ... ]`.
 
 ## `DumpHex( ... )`
 
@@ -395,7 +425,7 @@ DumpHex( $ptr, $length );
 Dumps `$length` bytes of raw data from a given point in memory.
 
 This is a debugging function that probably shouldn't find its way into your
-code.
+code and might not be public in the future.
 
 # Types
 
@@ -756,6 +786,48 @@ Anyway, here are the current options:
 When used in ["Signatures" in signatures](https://metacpan.org/pod/signatures#Signatures), most of these cause the internal
 argument stack to be reset. The exception is `CC_ELLIPSIS_VARARGS` which is
 used prior to binding varargs of variadic functions.
+
+# Examples
+
+The best example of use might be [LibUI](https://metacpan.org/pod/LibUI). Brief examples will be found in
+`eg/`. Very short examples might find their way here.
+
+## Microsoft Windows
+
+Here is an example of a Windows API call:
+
+```perl
+use Affix;
+sub MessageBoxA :Native('user32') :Signature([Int, Str, Str, Int] => Int);
+MessageBoxA(0, "We have NativeCall", "ohai", 64);
+```
+
+## Short tutorial on calling a C function
+
+This is an example for calling a standard function and using the returned
+information.
+
+`getaddrinfo` is a POSIX standard function for obtaining network information
+about a network node, e.g., `google.com`. It is an interesting function to
+look at because it illustrates a number of the elements of Affix.
+
+The Linux manual provides the following information about the C callable
+function:
+
+```
+int getaddrinfo(const char *node, const char *service,
+   const struct addrinfo *hints,
+   struct addrinfo **res);
+```
+
+The function returns a response code 0 for success and 1 for error. The data
+are extracted from a linked list of `addrinfo` elements, with the first
+element pointed to by `res`.
+
+From the table of Affix types we know that an `int` is `Int`. We also know
+that a `char *` is best expressed with `Str`. But `addrinfo` is a structure,
+which means we will need to write our own type class. However, the function
+declaration is straightforward:
 
 # LICENSE
 

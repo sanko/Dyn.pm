@@ -7,8 +7,6 @@ use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib', '../..
 use File::Spec;
 use t::lib::nativecall;
 use Config;
-
-#use experimental 'signatures';
 $|++;
 #
 compile_test_lib('50_affix_pointers');
@@ -121,7 +119,7 @@ subtest struct => sub {
     diag 'sizeof in perl: ' . sizeof( massive() );
     sub massive_ptr : Native('t/50_affix_pointers') : Signature([] => Pointer[massive()]);
     my $ptr = massive_ptr();
-    my $sv  = Affix::ptr2sv( massive(), $ptr );
+    my $sv  = cast( $ptr, Pointer [ massive() ] );
     is $sv->{A}{i}, 50,                   'parsed pointer to sv and got .A.i [nested structs]';
     is $sv->{Z},    'Just a little test', 'parsed pointer to sv and got .Z';
 };

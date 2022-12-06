@@ -62,6 +62,7 @@ DLLEXPORT massive *massive_ptr() {
     warn("    # offset.I:       %d", offsetof(massive, I));
     warn("    # offset.j:       %d", offsetof(massive, j));
     warn("    # offset.J:       %d", offsetof(massive, J));
+    warn("    # offset.Z:       %d", offsetof(massive, Z));
 
     /*retval.c = -100;
     retval.C = 100;
@@ -74,7 +75,7 @@ DLLEXPORT massive *massive_ptr() {
     return &retval;
 }
 DLLEXPORT char *dbl_ptr(double *dbl) {
-    // warn("# dbl == %f", *dbl);
+    warn("# dbl == %f", *dbl);
     if (dbl == NULL)
         return "NULL";
     else if (*dbl == 0) {

@@ -359,6 +359,8 @@ package Affix 0.04 {    # 'FFI' is my middle name!
         package Affix::Type::CC_SYSCALL 0.04;
 
         package Affix::Var 0.04;
+
+        package Affix::Pointer 0.04;
     }
 };
 1;
@@ -571,8 +573,8 @@ block.
 
     sub bar :Native({ './lib/Non Standard Naming Scheme' });
 
-B<BE CAREFUL>: the C<:Native> attribute and constant are evaluated at compile
-time.
+B<BE CAREFUL>: the C<:Native> attribute and constant might be evaluated at
+compile time.
 
 =head2 ABI/API version
 
@@ -603,6 +605,7 @@ For example on a UNIX-like operating system, you could use the following code
 to print the home directory of the current user:
 
     use Affix;
+    use Data::Dumper;
     typedef PwStruct => Struct [
         name  => Str,     # username
         pass  => Str,     # hashed pass if shadow db isn't in use
@@ -615,8 +618,44 @@ to print the home directory of the current user:
     sub getuid : Native : Signature([]=>Int);
     sub getpwuid : Native : Signature([Int]=>Pointer[PwStruct]);
     my $data = main::getpwuid( getuid() );
-    use Data::Dumper;
-    print Dumper( Affix::ptr2sv( PwStruct(), $data ) );
+    print Dumper( cast( $data, Pointer [ PwStruct() ] ) );
+
+=head1 Exported Variables
+
+Variables exported by a library - also names "global" or "extern" variables -
+can be accessed using C<tack( ... )>.
+
+=head2 C<tack( ... )>
+
+    tack( $errno, 'libc', 'errno', Int );
+    print $errno;
+    $errno = 0;
+
+This code applies magic to C<$error> that binds it to the integer variable
+named "errno" as exported by the L<libc> library.
+
+Expected parameters include:
+
+=over
+
+=item C<$var>
+
+Perl scalar that will be bound to the exported variable.
+
+=item C<$lib>
+
+pointer returned by L<< C<dlLoadLibrary( ... )>|Dyn::Load/C<dlLoadLibrary( ...
+)> >> or the path of the library as a string
+
+=item C<$symbol_name>
+
+the name of the exported variable
+
+=item C<$type>
+
+type that data will be coerced in or out of as required
+
+=back
 
 =head1 Memory Functions
 
@@ -702,17 +741,15 @@ Here's some thin cushions for the rougher edges of wrapping libraries.
 They may be imported by name for now but might be renamed, removed, or changed
 in the future.
 
-=head2 C<ptr2sv( ... )>
+=head2 C<cast( ... )>
 
-    my $hash = ptr2sv( $ptr, Struct[i => Int, ... ] );
+    my $hash = cast( $ptr, Struct[i => Int, ... ] );
 
-This function will parse a pointer into a Perl HashRef.
+This function will parse a pointer into a given target type.
 
-=head2 C<sv2ptr( ... )>
-
-    my $ptr = sv2ptr( $hash, Struct[i => Int, ... ] );
-
-This function will coerce a Perl HashRef into a pointer.
+The source pointer would have normally been obtained from a call to a native
+subroutine that returned a pointer, a lvalue pointer to a native subroutine,
+or, as part of a C<Struct[ ... ]>.
 
 =head2 C<DumpHex( ... )>
 
@@ -721,7 +758,7 @@ This function will coerce a Perl HashRef into a pointer.
 Dumps C<$length> bytes of raw data from a given point in memory.
 
 This is a debugging function that probably shouldn't find its way into your
-code.
+code and might not be public in the future.
 
 =head1 Types
 
@@ -1080,6 +1117,47 @@ When used in L<signatures/Signatures>, most of these cause the internal
 argument stack to be reset. The exception is C<CC_ELLIPSIS_VARARGS> which is
 used prior to binding varargs of variadic functions.
 
+=head1 Examples
+
+The best example of use might be L<LibUI>. Brief examples will be found in
+C<eg/>. Very short examples might find their way here.
+
+=head2 Microsoft Windows
+
+Here is an example of a Windows API call:
+
+    use Affix;
+    sub MessageBoxA :Native('user32') :Signature([Int, Str, Str, Int] => Int);
+    MessageBoxA(0, "We have NativeCall", "ohai", 64);
+
+=head2 Short tutorial on calling a C function
+
+This is an example for calling a standard function and using the returned
+information.
+
+C<getaddrinfo> is a POSIX standard function for obtaining network information
+about a network node, e.g., C<google.com>. It is an interesting function to
+look at because it illustrates a number of the elements of Affix.
+
+The Linux manual provides the following information about the C callable
+function:
+
+    int getaddrinfo(const char *node, const char *service,
+       const struct addrinfo *hints,
+       struct addrinfo **res);
+
+The function returns a response code 0 for success and 1 for error. The data
+are extracted from a linked list of C<addrinfo> elements, with the first
+element pointed to by C<res>.
+
+From the table of Affix types we know that an C<int> is C<Int>. We also know
+that a C<char *> is best expressed with C<Str>. But C<addrinfo> is a structure,
+which means we will need to write our own type class. However, the function
+declaration is straightforward:
+
+
+
+
 =head1 LICENSE
 
 Copyright (C) Sanko Robinson.
@@ -1096,7 +1174,7 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 dyncall OpenBSD FreeBSD macOS DragonFlyBSD NetBSD iOS ReactOS mips mips64 ppc32
 ppc64 sparc sparc64 co-existing varargs variadic struct enum eXtension rvalue
-dualvars libsomething versioned
+dualvars libsomething versioned errno
 
 =end stopwords
 

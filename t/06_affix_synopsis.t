@@ -5,7 +5,7 @@ use lib '../lib', 'lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib',
 use Affix;
 #
 if ( $^O eq 'darwin' ) {
-    plan skip_all => 'I know nothing about MacOS';
+    plan skip_all => 'I know nothing about macOS';
 }
 else {
     sub pow : Native(get_lib) : Signature([Double, Double]=>Double);
