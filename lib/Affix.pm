@@ -559,7 +559,7 @@ defined as part of your signature.
 
 =head1 Library Paths and Names
 
-The C<Native> attribute, C<affix( ... )>, and C<wrap( ... )> all accept the
+The C<:Native> attribute, C<affix( ... )>, and C<wrap( ... )> all accept the
 library name, the full path, or a subroutine returning either of the two. When
 using the library name, the name is assumed to be prepended with lib and
 appended with C<.so> (or just appended with C<.dll> on Windows), and will be
@@ -585,9 +585,9 @@ development package because it's recommended to always provide an API/ABI
 version to a shared library, so C<libfoo.so> ends often being a symbolic link
 provided only by a development package.
 
-To avoid that, the native trait allows you to specify the API/ABI version. It
-can be a full version or just a part of it. (Try to stick to Major version,
-some BSD code does not care for Minor.)
+To avoid that, the C<:Native> attribute allows you to specify the API/ABI
+version. It can be a full version or just a part of it. (Try to stick to Major
+version, some BSD code does not care for Minor.)
 
     use Affix;
     sub foo1 :Native('foo', v1); # Will try to load libfoo.so.1
@@ -623,11 +623,11 @@ to print the home directory of the current user:
 =head1 Exported Variables
 
 Variables exported by a library - also names "global" or "extern" variables -
-can be accessed using C<tack( ... )>.
+can be accessed using C<pin( ... )>.
 
-=head2 C<tack( ... )>
+=head2 C<pin( ... )>
 
-    tack( $errno, 'libc', 'errno', Int );
+    pin( $errno, 'libc', 'errno', Int );
     print $errno;
     $errno = 0;
 
@@ -656,6 +656,8 @@ the name of the exported variable
 type that data will be coerced in or out of as required
 
 =back
+
+This is likely broken on BSD. Patches welcome.
 
 =head1 Memory Functions
 

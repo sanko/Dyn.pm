@@ -5,35 +5,35 @@ typedef struct
     void *ptr;
 } var_ptr;
 
-I32 get_tack(pTHX_ SV *sv, MAGIC *mg) {
+I32 get_pin(pTHX_ SV *sv, MAGIC *mg) {
     var_ptr *ptr = (var_ptr *)mg->mg_ptr;
     SV *val = ptr2sv(aTHX_ ptr->ptr, ptr->type);
     sv_setsv(sv, val);
     return (I32)0;
 }
 
-I32 set_tack(pTHX_ SV *sv, MAGIC *mg) {
+I32 set_pin(pTHX_ SV *sv, MAGIC *mg) {
     var_ptr *ptr = (var_ptr *)mg->mg_ptr;
     DCpointer val = SvOK(sv) ? sv2ptr(aTHX_ ptr->type, sv, ptr->ptr, 0, 0) : NULL;
     return (I32)0;
 }
 
-I32 free_tack(pTHX_ SV *sv, MAGIC *mg) {
+I32 free_pin(pTHX_ SV *sv, MAGIC *mg) {
     var_ptr *ptr = (var_ptr *)mg->mg_ptr;
     sv_2mortal(ptr->type);
     safefree(ptr);
     return (I32)0;
 }
 
-static MGVTBL tack_vtbl = {
-    get_tack,  // get
-    set_tack,  // set
-    NULL,      // len
-    NULL,      // clear
-    free_tack, // free
-    NULL,      // copy
-    NULL,      // dup
-    NULL       // local
+static MGVTBL pin_vtbl = {
+    get_pin,  // get
+    set_pin,  // set
+    NULL,     // len
+    NULL,     // clear
+    free_pin, // free
+    NULL,     // copy
+    NULL,     // dup
+    NULL      // local
 };
 
 typedef struct CoW
@@ -1224,7 +1224,7 @@ OUTPUT:
     RETVAL
 
 void
-tack(SV *sv, lib, symbol, SV *type);
+pin(SV *sv, lib, symbol, SV *type);
     const char * symbol
 PREINIT:
 	struct ufuncs uf;
@@ -1283,7 +1283,7 @@ PPCODE:
         XSRETURN_EMPTY;
     }
     MAGIC *mg;
-    mg = sv_magicext(sv, NULL, PERL_MAGIC_ext, &tack_vtbl, NULL, 0);
+    mg = sv_magicext(sv, NULL, PERL_MAGIC_ext, &pin_vtbl, NULL, 0);
     {
         var_ptr *_ptr;
         Newx(_ptr, 1, var_ptr);
@@ -1540,7 +1540,7 @@ BOOT :
     export_function("Affix", "sv2ptr", "utility");
     export_function("Affix", "ptr2sv", "utility");
     export_function("Affix", "DumpHex", "utility");
-    export_function("Affix", "tack", "default");
+    export_function("Affix", "pin", "default");
     export_function("Affix", "cast", "default");
 }
 // clang-format off

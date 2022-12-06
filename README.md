@@ -199,7 +199,7 @@ defined as part of your signature.
 
 # Library Paths and Names
 
-The `Native` attribute, `affix( ... )`, and `wrap( ... )` all accept the
+The `:Native` attribute, `affix( ... )`, and `wrap( ... )` all accept the
 library name, the full path, or a subroutine returning either of the two. When
 using the library name, the name is assumed to be prepended with lib and
 appended with `.so` (or just appended with `.dll` on Windows), and will be
@@ -227,9 +227,9 @@ development package because it's recommended to always provide an API/ABI
 version to a shared library, so `libfoo.so` ends often being a symbolic link
 provided only by a development package.
 
-To avoid that, the native trait allows you to specify the API/ABI version. It
-can be a full version or just a part of it. (Try to stick to Major version,
-some BSD code does not care for Minor.)
+To avoid that, the `:Native` attribute allows you to specify the API/ABI
+version. It can be a full version or just a part of it. (Try to stick to Major
+version, some BSD code does not care for Minor.)
 
 ```perl
 use Affix;
@@ -269,12 +269,12 @@ print Dumper( cast( $data, Pointer [ PwStruct() ] ) );
 # Exported Variables
 
 Variables exported by a library - also names "global" or "extern" variables -
-can be accessed using `tack( ... )`.
+can be accessed using `pin( ... )`.
 
-## `tack( ... )`
+## `pin( ... )`
 
 ```
-tack( $errno, 'libc', 'errno', Int );
+pin( $errno, 'libc', 'errno', Int );
 print $errno;
 $errno = 0;
 ```
@@ -299,6 +299,8 @@ Expected parameters include:
 - `$type`
 
     type that data will be coerced in or out of as required
+
+This is likely broken on BSD. Patches welcome.
 
 # Memory Functions
 

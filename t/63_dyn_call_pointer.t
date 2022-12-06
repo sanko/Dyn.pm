@@ -5,6 +5,8 @@ use lib '../lib', '../blib/arch', '../blib/lib', 'blib/arch', 'blib/lib', '../..
 use Dyn::Call qw[:memory];
 $|++;
 #
+plan skip_all => q[You use *BSD. You don't like nice things.] if $^O =~ /bsd/i;
+#
 subtest 'memchr' => sub {
     my $str = malloc(7);
     memcpy( $str, 'ABCDEFG', 7 );
