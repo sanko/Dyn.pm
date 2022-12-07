@@ -33,16 +33,18 @@ on 'configure' => sub {
     requires 'Path::Tiny';
 };
 on 'develop' => sub {
-    requires 'Pod::Markdown::Github';
-    requires 'Software::License::Artistic_2_0';
+    recommends 'CPAN::Uploader';
     recommends 'Code::TidyAll';
     recommends 'Code::TidyAll::Plugin::ClangFormat';
+    recommends 'Code::TidyAll::Plugin::PodTidy';
     recommends 'Perl::Tidy';
     recommends 'Pod::Tidy';
-    recommends 'Code::TidyAll::Plugin::PodTidy';
     recommends 'Test::CPAN::Meta';
     recommends 'Test::MinimumVersion::Fast';
     recommends 'Test::PAUSE::Permissions';
     recommends 'Test::Pod' => 1.41;
     recommends 'Test::Spellunker';
+    recommends 'Version::Next';
+    requires 'Pod::Markdown::Github';
+    requires 'Software::License::Artistic_2_0';
 };
