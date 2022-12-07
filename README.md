@@ -750,16 +750,6 @@ Same as `Enum`.
 
 `Enum` but with signed chars.
 
-# See Also
-
-Check out [FFI::Platypus](https://metacpan.org/pod/FFI%3A%3APlatypus) for a more robust and mature FFI.
-
-Examples found in `eg/`.
-
-[LibUI](https://metacpan.org/pod/LibUI) for a larger demo project based on Affix
-
-[Types::Standard](https://metacpan.org/pod/Types%3A%3AStandard) for the inspiration of the advisory types system.
-
 # Calling Conventions
 
 Handle with care! Using these without understanding them can break your code!
@@ -830,6 +820,20 @@ From the table of Affix types we know that an `int` is `Int`. We also know
 that a `char *` is best expressed with `Str`. But `addrinfo` is a structure,
 which means we will need to write our own type class. However, the function
 declaration is straightforward:
+
+```
+TODO
+```
+
+# See Also
+
+Check out [FFI::Platypus](https://metacpan.org/pod/FFI%3A%3APlatypus) for a more robust and mature FFI.
+
+Examples found in `eg/`.
+
+[LibUI](https://metacpan.org/pod/LibUI) for a larger demo project based on Affix
+
+[Types::Standard](https://metacpan.org/pod/Types%3A%3AStandard) for the inspiration of the advisory types system.
 
 # LICENSE
 

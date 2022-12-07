@@ -970,16 +970,6 @@ C<Enum> but with unsigned integers.
 
 C<Enum> but with signed chars.
 
-=head1 See Also
-
-Check out L<FFI::Platypus> for a more robust and mature FFI.
-
-Examples found in C<eg/>.
-
-L<LibUI> for a larger demo project based on Affix
-
-L<Types::Standard> for the inspiration of the advisory types system.
-
 =head1 Calling Conventions
 
 Handle with care! Using these without understanding them can break your code!
@@ -1063,8 +1053,17 @@ that a C<char *> is best expressed with C<Str>. But C<addrinfo> is a structure,
 which means we will need to write our own type class. However, the function
 declaration is straightforward:
 
+    TODO
 
+=head1 See Also
 
+Check out L<FFI::Platypus> for a more robust and mature FFI.
+
+Examples found in C<eg/>.
+
+L<LibUI> for a larger demo project based on Affix
+
+L<Types::Standard> for the inspiration of the advisory types system.
 
 =head1 LICENSE
 
