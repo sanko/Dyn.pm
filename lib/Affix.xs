@@ -1558,6 +1558,32 @@ CODE:
 OUTPUT:
     RETVAL
 
+size_t
+offsetof(SV * type, char * field)
+CODE:
+  // clang-format on
+  {
+    if (sv_isobject(type) && (sv_derived_from(type, "Affix::Type::Struct"))) {
+        HV *href = MUTABLE_HV(SvRV(type));
+        SV **fields_ref = hv_fetch(href, "fields", 6, 0);
+        AV *fields = MUTABLE_AV(SvRV(*fields_ref));
+        size_t field_count = av_count(MUTABLE_AV(fields));
+        for (size_t i = 0; i < field_count; ++i) {
+            AV *av_field = MUTABLE_AV(*av_fetch(fields, i, 0));
+            if (!strcmp(SvPV_nolen(*av_fetch(av_field, 0, 0)), field)) {
+                RETVAL = _offsetof(aTHX_ * av_fetch(av_field, 1, 0));
+                break;
+            }
+            if (i == field_count) croak("Given structure does not contain field named '%s'", field);
+        }
+    }
+    else
+        croak("Given type is not a structure");
+}
+    // clang-format off
+OUTPUT:
+    RETVAL
+
 # c+p from Affix::Pointer
 
 DCpointer
@@ -1707,6 +1733,7 @@ PPCODE:
 BOOT :
 // clang-format on
 {
+    export_function("Affix", "offsetof", "default");
     export_function("Affix", "sizeof", "default");
     export_function("Affix", "malloc", "memory");
     export_function("Affix", "calloc", "memory");

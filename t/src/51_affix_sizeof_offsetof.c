@@ -193,3 +193,49 @@ DLLEXPORT size_t s_union4() {
 DLLEXPORT size_t s_voidptr() {
     return sizeof(void *);
 }
+//
+DLLEXPORT size_t o_B() {
+    return offsetof(massive, B);
+}
+DLLEXPORT size_t o_c() {
+    return offsetof(massive, c);
+}
+DLLEXPORT size_t o_C() {
+    return offsetof(massive, C);
+}
+DLLEXPORT size_t o_s() {
+    return offsetof(massive, s);
+}
+DLLEXPORT size_t o_S() {
+    return offsetof(massive, S);
+}
+DLLEXPORT size_t o_i() {
+    return offsetof(massive, i);
+}
+DLLEXPORT size_t o_I() {
+    return offsetof(massive, I);
+}
+DLLEXPORT size_t o_j() {
+    return offsetof(massive, j);
+}
+DLLEXPORT size_t o_J() {
+    return offsetof(massive, J);
+}
+DLLEXPORT size_t o_l() {
+    return offsetof(massive, l);
+}
+DLLEXPORT size_t o_L() {
+    return offsetof(massive, L);
+}
+DLLEXPORT size_t o_f() {
+    return offsetof(massive, f);
+}
+DLLEXPORT size_t o_d() {
+    return offsetof(massive, d);
+}
+DLLEXPORT size_t o_p() {
+    return offsetof(massive, p);
+}
+DLLEXPORT size_t o_Z() {
+    return offsetof(massive, Z);
+}

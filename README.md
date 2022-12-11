@@ -405,6 +405,16 @@ my $size1 = sizeof( Struct[ name => Str, age => Int ] );
 
 Returns the size, in bytes, of the [type](#types) passed to it.
 
+## `offsetof( ... )`
+
+```perl
+my $struct = Struct[ name => Str, age => Int ];
+my $offset = offsetof( $struct, 'age' );
+```
+
+Returns the offset, in bytes, from the beginning of a structure including
+padding, if any.
+
 # Utility Functions
 
 Here's some thin cushions for the rougher edges of wrapping libraries.

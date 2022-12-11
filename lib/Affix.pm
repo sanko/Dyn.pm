@@ -648,6 +648,14 @@ pointed to by C<$dest>.
 
 Returns the size, in bytes, of the L<type|/Types> passed to it.
 
+=head2 C<offsetof( ... )>
+
+    my $struct = Struct[ name => Str, age => Int ];
+    my $offset = offsetof( $struct, 'age' );
+
+Returns the offset, in bytes, from the beginning of a structure including
+padding, if any.
+
 =head1 Utility Functions
 
 Here's some thin cushions for the rougher edges of wrapping libraries.

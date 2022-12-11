@@ -8,8 +8,8 @@ $|++;
 #
 use t::lib::nativecall;
 #
-compile_test_lib('51_affix_sizeof');
-my $lib = 't/51_affix_sizeof';
+compile_test_lib('51_affix_sizeof_offsetof');
+my $lib = 't/51_affix_sizeof_offsetof';
 subtest 'fundamental types' => sub {
     is sizeof(Bool),     wrap( $lib, 's_bool',     [], Size_t )->(),  'sizeof(Bool)';
     is sizeof(Char),     wrap( $lib, 's_char',     [], Size_t )->(),  'sizeof(Char)';
@@ -22,6 +22,25 @@ subtest 'fundamental types' => sub {
     is sizeof(SSize_t),  wrap( $lib, 's_ssize_t',  [], SSize_t )->(), 'sizeof(SSize_t)';
     is sizeof(Size_t),   wrap( $lib, 's_size_t',   [], Size_t )->(),  'sizeof(Size_t)';
 };
+typedef massive => Struct [
+    B => Bool,
+    c => Char,
+    C => UChar,
+    s => Short,
+    S => UShort,
+    i => Int,
+    I => UInt,
+    j => Long,
+    J => ULong,
+    l => LongLong,
+    L => ULongLong,
+    f => Float,
+    d => Double,
+    p => Pointer [Int],
+    Z => Str,
+    A => Struct [ i => Int ],
+    u => Union [ i => Int, structure => Struct [ ptr => Pointer [Void], l => Long ] ]
+];
 subtest 'aggregates' => sub {
     my $struct1 = Struct [ c => ArrayRef [ Char, 3 ] ];
     my $struct2 = Struct [ c => ArrayRef [ Int,  3 ] ];
@@ -29,25 +48,6 @@ subtest 'aggregates' => sub {
     my $struct4 = Struct [ y => $struct3 ];    # Make sure we are padding cached size data
     my $struct5 = Struct [ y => Struct [ d => Double, c => ArrayRef [ Int, 3 ] ] ];
     my $struct6 = Struct [ y => $struct3, s => $struct4, c => Char ];
-    typedef massive => Struct [
-        B => Bool,
-        c => Char,
-        C => UChar,
-        s => Short,
-        S => UShort,
-        i => Int,
-        I => UInt,
-        j => Long,
-        J => ULong,
-        l => LongLong,
-        L => ULongLong,
-        f => Float,
-        d => Double,
-        p => Pointer [Int],
-        Z => Str,
-        A => Struct [ i => Int ],
-        u => Union [ i => Int, structure => Struct [ ptr => Pointer [Void], l => Long ] ]
-    ];
     my $struct7 = Struct [ i => Int, Z => Str ];
     subtest 'structs' => sub {
         is sizeof($struct1), wrap( $lib, 's_struct1', [], Size_t )->(), 'sizeof(struct1)';
@@ -82,6 +82,23 @@ subtest 'aggregates' => sub {
         }
     };
     is sizeof( Pointer [Void] ), wrap( $lib, 's_voidptr', [], Size_t )->(), 'sizeof(void *)';
+};
+subtest 'offsetof' => sub {
+    is offsetof( massive(), 'B' ), wrap( $lib, 'o_B', [], Size_t )->(), 'offsetof(..., "B")';
+    is offsetof( massive(), 'c' ), wrap( $lib, 'o_c', [], Size_t )->(), 'offsetof(..., "c")';
+    is offsetof( massive(), 'C' ), wrap( $lib, 'o_C', [], Size_t )->(), 'offsetof(..., "C")';
+    is offsetof( massive(), 's' ), wrap( $lib, 'o_s', [], Size_t )->(), 'offsetof(..., "s")';
+    is offsetof( massive(), 'S' ), wrap( $lib, 'o_S', [], Size_t )->(), 'offsetof(..., "S")';
+    is offsetof( massive(), 'i' ), wrap( $lib, 'o_i', [], Size_t )->(), 'offsetof(..., "i")';
+    is offsetof( massive(), 'I' ), wrap( $lib, 'o_I', [], Size_t )->(), 'offsetof(..., "I")';
+    is offsetof( massive(), 'j' ), wrap( $lib, 'o_j', [], Size_t )->(), 'offsetof(..., "j")';
+    is offsetof( massive(), 'J' ), wrap( $lib, 'o_J', [], Size_t )->(), 'offsetof(..., "J")';
+    is offsetof( massive(), 'l' ), wrap( $lib, 'o_l', [], Size_t )->(), 'offsetof(..., "l")';
+    is offsetof( massive(), 'L' ), wrap( $lib, 'o_L', [], Size_t )->(), 'offsetof(..., "L")';
+    is offsetof( massive(), 'f' ), wrap( $lib, 'o_f', [], Size_t )->(), 'offsetof(..., "f")';
+    is offsetof( massive(), 'd' ), wrap( $lib, 'o_d', [], Size_t )->(), 'offsetof(..., "d")';
+    is offsetof( massive(), 'p' ), wrap( $lib, 'o_p', [], Size_t )->(), 'offsetof(..., "p")';
+    is offsetof( massive(), 'Z' ), wrap( $lib, 'o_Z', [], Size_t )->(), 'offsetof(..., "Z")';
 };
 #
 done_testing;

@@ -400,8 +400,7 @@ static size_t _sizeof(pTHX_ SV *type) {
 }
 
 static size_t _offsetof(pTHX_ SV *type) {
-    _sizeof(aTHX_ type);
-    // verify it has been calculated
+    _sizeof(aTHX_ type); // verify it has been calculated
     if (hv_exists(MUTABLE_HV(SvRV(type)), "offset", 6))
         return SvIV(*hv_fetchs(MUTABLE_HV(SvRV(type)), "offset", 0));
     return 0;
