@@ -1,4 +1,4 @@
-package Affix 0.04 {    # 'FFI' is my middle name!
+package Affix 0.05 {    # 'FFI' is my middle name!
     use strict;
     use warnings;
     no warnings 'redefine';

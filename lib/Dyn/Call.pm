@@ -1,4 +1,4 @@
-package Dyn::Call 0.04 {
+package Dyn::Call 0.05 {
     use strict;
     use warnings;
     use 5.030;

@@ -1,4 +1,4 @@
-package Dyn::Callback 0.04 {
+package Dyn::Callback 0.05 {
     use strict;
     use warnings;
     use 5.030;
