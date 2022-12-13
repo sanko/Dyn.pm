@@ -6,7 +6,7 @@
  Description: Type and calling-convention signature character defines
  License:
 
-   Copyright (c) 2021 Tassilo Philipp <tphilipp@potion-studios.com>
+   Copyright (c) 2021-2022 Tassilo Philipp <tphilipp@potion-studios.com>
 
    Permission to use, copy, modify, and distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@
    this macro was introduced while working on v1.3, (so 0x130c)
 */
 
-#define DYNCALL_VERSION  0x140c
+#define DYNCALL_VERSION  0x150c
 
 #endif /* DYNCALL_VERSION_H */
 

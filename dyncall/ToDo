@@ -1,24 +1,15 @@
-1.4:
+1.5:
 ----
 - test atpcs thumb on arm and verify if ellipsis and C++ thiscalls work, if so adapt doc appendix
 - test eabi thumb on arm and verify if ellipsis and C++ thiscalls work, if so adapt doc appendix
 - new platform matrix
   * check dark green cells and validate in general
-- openbsd-4.0-* test/resolve_self fails, but unsure why. dlopen correctly returns RTLD_DEFAULT, which
-  should lookup via dlsym the function in the object itself, but cannot. So... some compiler flag might
-  be missing to keep symbol names, or some prefixing happens
 - test/thunk win/x64 doesn't output anything decent for stack test (neither sigsegv nor output), which can create a problem for test log file as it'll mess with the subsequent test's output)
 - remove test/gen-masm alltogether
 - test code: add sparc tests for when out of register windows, meaning multiple layers deep in the call stack
-- ./configure on macOS does not pass CFLAGS etc.. to Makefile.config
 - support platforms without shared libraries so they can be built by just typing `./configure;make` (e.g. minix < 3.2.1)
   * also make sure minix with shared library support builds and works in general (>= 3.2.1) as well as ELF on Minix (>= 3.2.0) to begin with (as that's the base, and we only test on 3.1.8 so far)
-- dyncall supports calls to functions where prototype exists (with and without varargs); however not when no
-  prototype exist (e.g. just calling some pointer), without any declaration... even possible in C, as one has
-  to cast to the function type? need to support?
 - dyncallback's "stack_cleanup" can be removed from non x86 impls... test if they still work
-- target a minimum c version, for use with -pedantic, etc.? Right now we use e.g. extensions
-  for anon structs, etc. -> we do now target c99
 - the CallVM-free functions are per VTable, however the latter can be changed out
   at runtime... which basically changes potentially the deallocator...
   same goes for functions setting the mode. think about how to make this safer - currently
@@ -69,14 +60,11 @@ dyncall:
 - find big endian arm box (also hardfloat), e.g. cubietruck: http://blog.netbsd.org/tnf/entry/working_arm_multiprocessor_support
 - test if armhf/thumb is actually working... pulls in arm mode code in dyncall_callvm.c
 - dyncall_call_mips_n32.h and dyncall_call_mips_n64.h are pretty much the same, share code
-- support for return values: aggregate return values
-- support for argument values: structures, half-precision, vector types, long double (c89)
+- support for return values: aggregate return values on non-x64
+- support for argument values: aggregates on non-x64, vector types, long double (c89)
+  * make sure that struct support for ellipsis calls are not forgotten (copy everything by value)
 - support for argument values: _Complex (c99)
 - support for argument values: Fixed-width integer types (c99) - could be just aliases but would help abstracting it away from library users
-  * make sure that struct support for ellipsis calls are not forgotten (copy everything by value)
-- consider automatic type-promotion for arguments passed through DC_CALL_C_ELLIPSIS_VARARGS;
-  this would make it easier to just pass arguments instead of having to know about the C
-  type promotions (this is partly done, see todo-item above under 1.1)
 - other syscalls
 - test MIPS32 eabi big endian (current port works on psp, which is little endian)
 - implement MIPS64 N32 (gcc -mabi=n32); both, little and big-endian (looks like NetNBSD on and
@@ -180,11 +168,9 @@ bugs:
 - setting callconv, specifically for platforms that have only one (default)) excepts on some
   platforms, eg. setting X64_sysv on amd64/Linux - keeping cdecl which is the same in
   this case, works (this should work now...)
-- vararg function calls don't work for ARM THUMB mode (Daniel's new interface for modesetting for varag
-  args should be used); adapt test/ellipsis and/or retest
 
-missing implementations (descending priority):
-----------------------------------------------
+missing nice-to-have implementations (descending priority):
+-----------------------------------------------------------
 - riscv
 - itanium
 - superh/j-core

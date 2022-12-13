@@ -1,7 +1,7 @@
 This file lists bigger/noteworthy changes, only...
 
 
-Version 1.4 (upcoming)
+Version 1.4 (2022/12/06)
 
 dyncall:
   o new, portable aggregate-by-value argument interface
