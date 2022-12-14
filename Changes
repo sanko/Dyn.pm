@@ -1,13 +1,8 @@
-Revision history for Perl extension Affix.pm and Dyn.pm
+Revision history for Perl extension Dyn.pm
 
 {{$NEXT}}
 
-    - Strings inside of structs are not correct
-    - Expose offsetof( ... )
-
-0.04 2022-12-07T00:30:25Z
-
-    - Affix.pm is born
+    - Pull upstream changes to dyncall 1.4 (stable)
 
 0.03 2021-12-05T01:23:23Z
 

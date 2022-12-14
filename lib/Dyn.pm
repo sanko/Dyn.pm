@@ -22,7 +22,7 @@ __END__
 
 =head1 NAME
 
-Dyn - dyncall Backed FFI
+Dyn - dyncall-Backed FFI Building Blocks
 
 =head1 SYNOPSIS
 
@@ -152,7 +152,11 @@ mips, mips64, ppc32, ppc64, sparc, sparc64, etc.).
 
 =head1 See Also
 
-Examples found in C<eg/>.
+L<https://dyncall.org>
+
+L<Affix> for a dyncall wrapper with some of the rough edges sanded down.
+
+L<FFI::Platypus> for a mature, well-tested FFI.
 
 =head1 LICENSE
 

@@ -10,7 +10,6 @@ AllowShortCaseLabelsOnASingleLine: 'false'
 
 # Merge all inline functions fitting on a single line
 AllowShortFunctionsOnASingleLine: 'Inline'
-
 # If (a) return; can be put on a single line
 AllowShortIfStatementsOnASingleLine: 'true'
 

@@ -1,6 +1,6 @@
 {
    "X_No_Archive" : "Yes",
-   "abstract" : "A Foreign Function Interface eXtension",
+   "abstract" : "dyncall-Backed FFI Building Blocks",
    "author" : [
       "Sanko Robinson <sanko@cpan.org>"
    ],
@@ -13,7 +13,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "Affix",
+   "name" : "Dyn",
    "no_index" : {
       "directory" : [
          "t",
@@ -73,7 +73,7 @@
             "Sub::Util" : "0",
             "Text::ParseWords" : "0",
             "XSLoader" : "0",
-            "perl" : "5.030000"
+            "perl" : "5.030"
          }
       },
       "test" : {
@@ -86,13 +86,13 @@
    "release_status" : "unstable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/sanko/Affix.pm/issues"
+         "web" : "https://github.com/sanko/Dyn.pm/issues"
       },
-      "homepage" : "https://github.com/sanko/Affix.pm",
+      "homepage" : "https://github.com/sanko/Dyn.pm",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/sanko/Affix.pm.git",
-         "web" : "https://github.com/sanko/Affix.pm"
+         "url" : "https://github.com/sanko/Dyn.pm.git",
+         "web" : "https://github.com/sanko/Dyn.pm"
       }
    },
    "version" : "0.05",
